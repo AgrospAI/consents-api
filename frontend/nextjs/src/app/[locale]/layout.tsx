@@ -24,13 +24,12 @@ const titilliumWeb = Titillium_Web({
   subsets: ["latin"],
 });
 
-export function generateStaticParams() {
+function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
 
-export async function generateMetadata({
-  params: { locale },
-}: Properties): Promise<Metadata> {
+async function generateMetadata(props: Properties): Promise<Metadata> {
+  const { locale } = await props.params;
   const t = await getTranslations({ locale, namespace: "LocaleLayout" });
 
   return {
@@ -40,9 +39,11 @@ export async function generateMetadata({
 }
 
 async function LocaleLayout({
+  params,
   children,
-  params: { locale },
 }: Readonly<PropsWithChildren<Properties>>) {
+  const { locale } = await params;
+
   // Ensure that the incoming `locale` is valid
   if (!routing.locales.includes(locale as any)) {
     notFound();
@@ -70,3 +71,4 @@ async function LocaleLayout({
 }
 
 export default LocaleLayout;
+export { generateStaticParams, generateMetadata };
