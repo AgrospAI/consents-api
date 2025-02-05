@@ -1,9 +1,13 @@
 "use client";
+
 import Image from "next/image";
-import Link from "next/link";
 import logo from "@public/logo-horizontal.svg";
-import { Globe, TableOfContents, User } from "lucide-react";
+import { TableOfContents, User } from "lucide-react";
 import { ReactElement } from "react";
+import { Link } from "@/i18n/routing";
+import { useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
+import LocalePicker from "@/components/LocalePicker";
 
 interface PageLink {
   href: string;
@@ -12,13 +16,16 @@ interface PageLink {
 }
 
 const links: PageLink[] = [
-  { href: "/", label: "Consents", icon: <TableOfContents /> },
-  { href: "/profile", label: "Profile", icon: <User /> },
+  { href: "/", label: "consents", icon: <TableOfContents /> },
+  { href: "/profile", label: "profile", icon: <User /> },
 ];
 
 function Header() {
+  const t = useTranslations("Header");
+  const { locale } = useParams<{ locale: string }>();
+
   return (
-    <header className="relative p-[1.85rem] bg-primary block justify-center items-center">
+    <header className="relative p-[1.6rem] bg-primary block justify-center items-center">
       {/* AgrospAI icon */}
       <Link href="/" className="absolute left-2.5 top-[20px]">
         <Image src={logo} alt="AgrospAI logo" className="w-[15rem] h-[6rem]" />
@@ -29,13 +36,15 @@ function Header() {
           <Link
             key={index}
             aria-label={label}
-            className="uppercase transition hover:underline underline-offset-4 flex items-center gap-x-2"
+            className="uppercase transform transition hover:underline underline-offset-4 flex items-center gap-x-2  hover:scale-105"
             href={href}
           >
-            {icon} {label}
+            {icon} {t(label)}
           </Link>
         ))}
-        <Globe />
+        <div className="transition hover:scale-105">
+          <LocalePicker />
+        </div>
       </nav>
     </header>
   );
