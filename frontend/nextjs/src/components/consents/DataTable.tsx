@@ -29,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DropdownMenuCheckboxItem } from "@radix-ui/react-dropdown-menu";
+import { ArrowLeft, ArrowRight, Table2 } from "lucide-react";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -64,7 +65,7 @@ export function DataTable<TData, TValue>({
 
   return (
     <>
-      <div className="flex items-center py-4">
+      <div className="flex flexrow gap-x-8 py-4">
         <Input
           placeholder={t("Filter")}
           onChange={(event) => {
@@ -75,7 +76,7 @@ export function DataTable<TData, TValue>({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button className="ml-auto" variant="secondary">
-              {t("Columns")}
+              <Table2 /> {t("Columns")}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -102,30 +103,33 @@ export function DataTable<TData, TValue>({
               })}
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
-      <div className="flex flex-row justify-end gap-x-2 pb-2">
-        <Button
-          variant={`${table.getCanPreviousPage() ? "default" : "outline"}`}
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-          className={`text-bold uppercase ${
-            table.getCanPreviousPage() ? "shadowed-xl hover:scale-105" : ""
-          }`}
-        >
-          {t("Previous")}
-        </Button>
-        <Button
-          variant={`${table.getCanNextPage() ? "default" : "outline"}`}
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-          className={`text-bold uppercase ${
-            table.getCanNextPage() ? "shadowed-xl hover:scale-105" : ""
-          }`}
-        >
-          {t("Next")}
-        </Button>
+
+        <div className="flex flex-row justify-center items-center gap-x-2 pb-2">
+          <Button
+            variant={`${table.getCanPreviousPage() ? "default" : "outline"}`}
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+            className={`text-bold uppercase ${
+              table.getCanPreviousPage() ? "shadowed-xl hover:scale-105" : ""
+            }`}
+          >
+            <ArrowLeft />
+            {t("Previous")}
+          </Button>
+          <Button
+            variant={`${table.getCanNextPage() ? "default" : "outline"}`}
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+            className={`text-bold uppercase ${
+              table.getCanNextPage() ? "shadowed-xl hover:scale-105" : ""
+            }`}
+          >
+            {t("Next")}
+            <ArrowRight />
+          </Button>
+        </div>
       </div>
       <div className="rounded-lg border shadow-lg h-full">
         <Table>
