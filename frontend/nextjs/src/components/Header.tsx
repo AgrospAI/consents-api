@@ -6,7 +6,6 @@ import { TableOfContents, User } from "lucide-react";
 import { ReactElement } from "react";
 import { Link } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
-import { useParams } from "next/navigation";
 import LocalePicker from "@/components/LocalePicker";
 
 interface PageLink {
@@ -16,13 +15,12 @@ interface PageLink {
 }
 
 const links: PageLink[] = [
-  { href: "/", label: "consents", icon: <TableOfContents /> },
+  { href: "/consents", label: "consents", icon: <TableOfContents /> },
   { href: "/profile", label: "profile", icon: <User /> },
 ];
 
 function Header() {
   const t = useTranslations("Header");
-  const { locale } = useParams<{ locale: string }>();
 
   return (
     <header className="relative p-[1.6rem] bg-primary block justify-center items-center">

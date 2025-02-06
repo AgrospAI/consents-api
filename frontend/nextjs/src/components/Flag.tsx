@@ -4,6 +4,7 @@ import React from "react";
 interface Properties {
   locale: string;
   className?: string;
+  name?: string;
 }
 
 const countryCodes = {
@@ -11,7 +12,8 @@ const countryCodes = {
   es: "es",
 };
 
-function Flag({ locale, className }: Properties) {
+function Flag({ locale, className, name }: Properties) {
+  console.log(locale, name);
   const FlagComponent =
     Flags[
       countryCodes[

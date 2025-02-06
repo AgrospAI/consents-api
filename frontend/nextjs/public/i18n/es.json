@@ -1,29 +1,43 @@
 {
-    "HomePage": {
-        "title": "Menú",
-        "description": "Bienvenido a la página principal"
-    },
-    "LocaleLayout": {
-        "title": "Consents APP | AgrospAI",
-        "description": "Consents application developed by AgrospAI team for leveraging the user's work for accepting incoming consent petitions."
-    },
-    "NotFoundPage": {
-        "title": "Not Found Page",
-        "description": "This is the not found page"
-    },
-    "Header": {
-        "consents": "Consentimientos",
-        "profile": "Perfil"
-    },
-    "LocalePicker": {
-        "title": "Selecciona un idioma",
-        "description": "Selecciona el nuevo idioma para la aplicación",
-        "cancel": "Cancelar",
-        "es": "Español",
-        "en": "Inglés"
-    },
-    "Footer": {
-        "developed": "Desarrollado por",
-        "udl": "Universidad de Lleida"
+  "HomePage": {
+    "title": "Menú",
+    "description": "Bienvenido a la página principal"
+  },
+  "LocaleLayout": {
+    "title": "Consents APP | AgrospAI",
+    "description": "Consents application developed by AgrospAI team for leveraging the user's work for accepting incoming consent petitions."
+  },
+  "Consents": {
+    "tabs": {
+      "pending": "Pendientes",
+      "accepted": "Aceptados",
+      "rejected": "Rechazados"
     }
+  },
+  "NotFoundPage": {
+    "title": "Not Found Page",
+    "description": "This is the not found page"
+  },
+  "Header": {
+    "consents": "Consentimientos",
+    "profile": "Perfil"
+  },
+  "LocalePicker": {
+    "title": "Selecciona un idioma",
+    "description": "Selecciona el nuevo idioma para la aplicación",
+    "cancel": "Cancelar",
+    "es": "Español",
+    "en": "Inglés"
+  },
+  "Footer": {
+    "developed": "Desarrollado por",
+    "udl": "Universidad de Lleida"
+  },
+  "Table": {
+    "NoContent": "Sin resultados.",
+    "Next": "Siguiente",
+    "Previous": "Anterior",
+    "Filter": "Filtrar por nombre...",
+    "Columns": "Columnas"
+  }
 }
