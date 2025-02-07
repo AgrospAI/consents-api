@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useTransition } from "react";
 import { useLocale } from "next-intl";
 import { Locale, useRouter, usePathname } from "@/i18n/routing";
@@ -35,14 +37,16 @@ function LocalePicker() {
           updateLocale={onLocaleChange}
           isOpen={isOpen}
           setIsOpen={setIsOpen}
+          isPending={isPending}
         />
       </div>
-      <div className="hidden lg:block">
+      <div className="hidden lg:block z-[-9999]">
         <ComboboxLocalePicker
           locale={locale}
           updateLocale={onLocaleChange}
           isOpen={isOpen}
           setIsOpen={setIsOpen}
+          isPending={isPending}
         />
       </div>
     </>

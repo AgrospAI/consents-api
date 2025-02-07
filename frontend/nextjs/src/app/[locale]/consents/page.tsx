@@ -3,6 +3,7 @@ import { useTranslations } from "next-intl";
 import React from "react";
 import ConsentsTable from "@/components/consents/ConsentsTable";
 import Consent, { statuses } from "@/lib/entities/Consent";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 async function getData(): Promise<Consent[]> {
   const data = [
@@ -38,7 +39,7 @@ function ConsentsPage() {
   return (
     <Tabs defaultValue="pending" className="size-full">
       <div className="flex justify-center">
-        <TabsList className="flex flex-row gap-x-4 bg-secondary text-white">
+        <TabsList className="flex flex-row gap-x-4 bg-secondary text-white shadow-xl">
           {statuses.map((status, idx) => (
             <TabsTrigger
               key={`trigger-${idx}`}

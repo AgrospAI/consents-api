@@ -1,4 +1,8 @@
-import { Moon, UserCog } from "lucide-react";
+"use client";
+import AuthAlert from "@/components/AuthAlert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import useUser from "@/hooks/useUser";
+import { CircleAlert, Moon, UserCog } from "lucide-react";
 import Link from "next/link";
 
 interface Settings {
@@ -42,9 +46,14 @@ function IndividualSetting({ name, href, icon }: Settings, index: number) {
 }
 
 function Settings() {
+  const user = useUser();
+
   return (
     <>
-      <h1>lkasdjskadl</h1>
+      {!user && <AuthAlert />}
+
+      <h2>Welcome: {user?.public_key}</h2>
+      <h1>Settings</h1>
     </>
   );
 }

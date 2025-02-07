@@ -7,6 +7,8 @@ import {
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
+  getSortedRowModel,
+  SortingState,
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table";
@@ -20,16 +22,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
-import React from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { DropdownMenuCheckboxItem } from "@radix-ui/react-dropdown-menu";
-import { ArrowLeft, ArrowRight, Table2 } from "lucide-react";
+import { DataTablePagination } from "@/components/data-table/DataTablePagination";
+import { DataTableViewOptions } from "@/components/data-table/DataTableViewOptions";
+import { Filter, User } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Label } from "@/components/ui/label";
+import IconInput from "../IconInput";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -42,98 +42,46 @@ export function DataTable<TData, TValue>({
 }: DataTableProps<TData, TValue>) {
   const t = useTranslations("Table");
 
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = useState({});
 
   const table = useReactTable({
     columns,
     data,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    onColumnFiltersChange: setColumnFilters,
+    getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    onColumnFiltersChange: setColumnFilters,
+    onSortingChange: setSorting,
     onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
     state: {
+      sorting,
       columnFilters,
       columnVisibility,
+      rowSelection,
     },
   });
 
   return (
     <>
-      <div className="flex flexrow gap-x-8 py-4">
-        <Input
+      <div className="flex flex-row items-end gap-x-8 py-4">
+        <IconInput
+          id="user-filter"
+          icon={<Filter className="size-4" />}
           placeholder={t("Filter")}
           onChange={(event) => {
             table.getColumn("name")?.setFilterValue(event.target.value);
           }}
-          className="max-w-sm"
         />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button className="ml-auto" variant="secondary">
-              <Table2 /> {t("Columns")}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={column.toggleVisibility}
-                  >
-                    <div
-                      className={`w-full p-0.5 text-center cursor-pointer ${
-                        column.getIsVisible() ? "" : "line-through"
-                      }`}
-                    >
-                      {column.id}
-                    </div>
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <div className="flex flex-row justify-center items-center gap-x-2 pb-2">
-          <Button
-            variant={`${table.getCanPreviousPage() ? "default" : "outline"}`}
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-            className={`text-bold uppercase ${
-              table.getCanPreviousPage() ? "shadowed-xl hover:scale-105" : ""
-            }`}
-          >
-            <ArrowLeft />
-            {t("Previous")}
-          </Button>
-          <Button
-            variant={`${table.getCanNextPage() ? "default" : "outline"}`}
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-            className={`text-bold uppercase ${
-              table.getCanNextPage() ? "shadowed-xl hover:scale-105" : ""
-            }`}
-          >
-            {t("Next")}
-            <ArrowRight />
-          </Button>
-        </div>
+        <DataTableViewOptions table={table} />
       </div>
-      <div className="rounded-lg border shadow-lg h-full">
-        <Table>
-          <TableHeader>
+      <ScrollArea className="h-full rounded-md">
+        <Table className="rounded-lg border shadow-lg h-full my-2">
+          <TableHeader className="sticky top-0">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
@@ -180,7 +128,8 @@ export function DataTable<TData, TValue>({
             )}
           </TableBody>
         </Table>
-      </div>
+      </ScrollArea>
+      <DataTablePagination table={table} />
     </>
   );
 }

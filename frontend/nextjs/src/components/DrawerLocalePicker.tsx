@@ -16,6 +16,7 @@ import { Locale, routing } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 
 interface Properties {
+  isPending: boolean;
   locale: Locale;
   updateLocale: (locale: Locale) => void;
   isOpen: boolean;
@@ -23,16 +24,17 @@ interface Properties {
 }
 
 function DrawerLocalePicker({
+  isPending,
   locale,
   updateLocale,
   isOpen,
   setIsOpen,
-}: Readonly<Properties>) {
+}: Properties) {
   const t = useTranslations("LocalePicker");
 
   return (
     <Drawer onOpenChange={() => setIsOpen(!isOpen)}>
-      <DrawerTrigger>
+      <DrawerTrigger disabled={isPending}>
         <div className="flex flex-row gap-x-1 items-center justify-center">
           <Flag locale={locale} className="size-8" />
           {isOpen ? <ChevronUp /> : <ChevronDown />}

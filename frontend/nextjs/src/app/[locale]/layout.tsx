@@ -60,10 +60,10 @@ async function LocaleLayout({
       <body className={`${titilliumWeb.variable} antialiased h-screen`}>
         <NextIntlClientProvider messages={messages}>
           <Header />
-          <main className="flex flex-col items-center py-2 w-[75%] mx-auto h-full">
+          <main className="flex flex-col items-center pt-4 pb-5 w-[75%] mx-auto h-auto">
             {children}
+            <Footer />
           </main>
-          <Footer />
         </NextIntlClientProvider>
       </body>
     </html>

@@ -1,7 +1,21 @@
 {
   "HomePage": {
-    "title": "Menú",
-    "description": "Bienvenido a la página principal"
+    "title": "Bienvenid@ a la aplicación de consentimientos de AgrospAI",
+    "description": "Aquí podrás gestionar todos los consentimientos de tus activos de forma más cómoda",
+    "content": {
+      "first": {
+        "title": "Consentimientos",
+        "content": "consentimientos"
+      },
+      "second": {
+        "title": "Perfil",
+        "content": "perfil"
+      },
+      "third": {
+        "title": "Cerrar sesión",
+        "content": "asdasdjhgklrekjhjfkqjjqkdjqwljkqwljdklqwjdklqwjdklqwjdklwqdqwjdklqweuikqwueikljdaklsjdkljqwiue"
+      }
+    }
   },
   "LocaleLayout": {
     "title": "Consents APP | AgrospAI",

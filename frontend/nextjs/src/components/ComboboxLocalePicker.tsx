@@ -12,20 +12,22 @@ interface Properties {
   locale: Locale;
   updateLocale: (locale: Locale) => void;
   isOpen: boolean;
+  isPending: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }
 
 function ComboboxLocalePicker({
+  isPending,
   locale,
   updateLocale,
   isOpen,
   setIsOpen,
-}: Readonly<Properties>) {
+}: Properties) {
   const t = useTranslations("LocalePicker");
 
   return (
     <Popover onOpenChange={() => setIsOpen(!isOpen)}>
-      <PopoverTrigger asChild>
+      <PopoverTrigger asChild disabled={isPending}>
         <div className="flex flex-row gap-x-1 items-center justify-center cursor-pointer hover:scale-105">
           <Flag locale={locale} className="size-8" />
           {isOpen ? <ChevronUp /> : <ChevronDown />}
