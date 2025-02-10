@@ -1,6 +1,6 @@
 "use client";
 
-import Consent from "@/lib/entities/Consent";
+import Consent from "@/utils/entities/Consent";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -14,6 +14,14 @@ import { MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/data-table/DataTableColumnHeader";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+} from "@/components/ui/dialog";
 
 export const columns: ColumnDef<Consent>[] = [
   {
@@ -76,8 +84,17 @@ export const columns: ColumnDef<Consent>[] = [
               Copy payment ID
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>View customer</DropdownMenuItem>
-            <DropdownMenuItem>View payment details</DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Dialog>
+                <DialogTrigger>View Details</DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Payment Details</DialogTitle>
+                    <DialogDescription>...</DialogDescription>
+                  </DialogHeader>
+                </DialogContent>
+              </Dialog>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

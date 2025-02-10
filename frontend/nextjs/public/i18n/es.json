@@ -53,5 +53,9 @@
     "Previous": "Anterior",
     "Filter": "Filtrar por nombre...",
     "Columns": "Columnas"
+  },
+  "Account": {
+    "NotConnected": "No estás conectado",
+    "Connecting": "Conectando..."
   }
 }

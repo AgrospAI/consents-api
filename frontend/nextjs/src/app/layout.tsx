@@ -2,16 +2,19 @@
 
 import { PropsWithChildren, useState } from "react";
 import "./globals.css";
-import AuthContext from "@/context";
-import User from "@/lib/entities/User";
+import AuthProvider from "@/context/AuthProvider";
+import User from "@/utils/entities/User";
+import Web3Provider from "@/context/Web3Provider";
 
 function RootLayout({ children }: Readonly<PropsWithChildren>) {
   const [user, setUser] = useState<User>();
 
   return (
-    <AuthContext.Provider value={{ user, setUser }}>
-      {children}
-    </AuthContext.Provider>
+    <Web3Provider>
+      <AuthProvider.Provider value={{ user, setUser }}>
+        {children}
+      </AuthProvider.Provider>
+    </Web3Provider>
   );
 }
 

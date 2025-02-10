@@ -40,7 +40,7 @@ function LocalePicker() {
           isPending={isPending}
         />
       </div>
-      <div className="hidden lg:block z-[-9999]">
+      <div className="hidden lg:block z-1000">
         <ComboboxLocalePicker
           locale={locale}
           updateLocale={onLocaleChange}

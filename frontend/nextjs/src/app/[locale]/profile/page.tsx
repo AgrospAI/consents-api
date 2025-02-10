@@ -3,7 +3,9 @@ import AuthAlert from "@/components/AuthAlert";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import useUser from "@/hooks/useUser";
 import { CircleAlert, Moon, UserCog } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
+import { useAccount } from "wagmi";
 
 interface Settings {
   name: string;
@@ -45,17 +47,21 @@ function IndividualSetting({ name, href, icon }: Settings, index: number) {
   );
 }
 
-function Settings() {
-  const user = useUser();
+function WalletSettings() {
+  const t = useTranslations("Account");
+  const { address, isConnecting, isDisconnected } = useAccount();
+
+  if (isDisconnected)
+    return <AuthAlert variant="destructive" message={t("NotConnected")} />;
+
+  if (isConnecting)
+    return <AuthAlert variant="default" message={t("Connecting")} />;
 
   return (
     <>
-      {!user && <AuthAlert />}
-
-      <h2>Welcome: {user?.public_key}</h2>
-      <h1>Settings</h1>
+      <h1>Settings: {address}</h1>
     </>
   );
 }
 
-export default Settings;
+export default WalletSettings;

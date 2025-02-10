@@ -1,4 +1,4 @@
-import User from "@/lib/entities/User";
+import User from "@/utils/entities/User";
 
 interface Auth {
   user?: User;

@@ -1,6 +1,6 @@
 import React, { use } from "react";
 import { DataTable } from "./DataTable";
-import Consent from "@/lib/entities/Consent";
+import Consent from "@/utils/entities/Consent";
 import { columns } from "./Columns";
 
 interface Properties {
