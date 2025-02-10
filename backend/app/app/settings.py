@@ -37,6 +37,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+
+    "web3auth",
+    "rest_framework",
+    
+    "auth",
+    "consents",
 ]
 
 MIDDLEWARE = [
@@ -121,3 +127,22 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+}
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "web3auth.backends.Web3Backend"
+]
+
+
+
+# WEB3AUTH_USER_ADDRESS_FIELD = "username"
+# WEB3AUTH_USER_SIGNUP_FIELDS = ["email", ]

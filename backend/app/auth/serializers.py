@@ -1,9 +1,9 @@
-from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
+from . import models
 
-class UserSerializer(serializers.ModelSerializer):
+class Web3UserSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = get_user_model
+        model = models.Web3User
         fields = "__all__"

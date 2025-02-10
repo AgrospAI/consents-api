@@ -1,5 +1,5 @@
 import utils
-from django.contrib.auth import get_user_model, login
+from django.contrib.auth import login
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.permissions import AllowAny
@@ -8,14 +8,12 @@ from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_RE
 from rest_framework.throttling import AnonRateThrottle
 from rest_framework.viewsets import GenericViewSet
 
-from . import serializers
-
-User = get_user_model()
+from . import serializers, models
 
 
 class LoginViewset(CreateModelMixin, GenericViewSet):
-    queryset = User.objects.all()
-    serializer_class = serializers.UserSerializer
+    queryset = models.Web3User.objects.all()
+    serializer_class = serializers.Web3UserSerializer
     permission_classes = [AllowAny]
     throttle_classes = [AnonRateThrottle]
 
@@ -27,7 +25,7 @@ class LoginViewset(CreateModelMixin, GenericViewSet):
         # password = request.data.get("password")
         public_key = request.data.get("public_key")
 
-        return User.objects.filter(username=username, public_key=public_key).first()
+        return models.Web3User.objects.filter(username=username, public_key=public_key).first()
 
 
 class AuthenticateViewset(CreateModelMixin, GenericViewSet):
@@ -42,7 +40,7 @@ class AuthenticateViewset(CreateModelMixin, GenericViewSet):
         # Verify the signature
         if utils.verify_signature(address, signature, message):
             # If the signature is valid, log in the user
-            user, is_created = User.objects.get_or_create(address=address)
+            user, is_created = models.Web3User.objects.get_or_create(address=address)
             login(user)
             return Response(
                 {"message": f"Authenticated as {user.address}"},
