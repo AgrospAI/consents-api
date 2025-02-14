@@ -1,12 +1,10 @@
 from fastapi import FastAPI
 
-from .routers import consents
+from app.api.main import api_router
 
 app = FastAPI()
 
-app.include_router(consents.router)
+app.include_router(api_router)
 
 
-@app.get("/")
-async def root():
-    return {"message": "Hello"}
+# https://github.com/fastapi/full-stack-fastapi-template/blob/master/backend/app/models.py
