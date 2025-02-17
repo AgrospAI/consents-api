@@ -1,17 +1,66 @@
 services:
-  api:
+  db:
+    image: postgres:16
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - app-db-data:/var/lib/postgresql/data/pgdata
+    env_file:
+      - .env
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: ${POSTGRES_USER:?Variable is not set}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Variable is not set}
+      POSTGRES_DB: ${POSTGRES_DB:?Variable is not set}
+    
+  prestart:
     build:
       context: ./backend
     depends_on:
-      - db
-
-  db:
-    image: postgres:16
+      db:
+        condition: service_healthy
+        restart: true
+    command: bash scripts/prestart.sh
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is not set}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is not set}
-      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is not set}
+      POSTGRES_SERVER: db
+      POSTGRES_PORT: ${POSTGRES_PORT:?Variable is not set}
+      POSTGRES_DB: ${POSTGRES_DB:?Variable is not set}
+      POSTGRES_USER: ${POSTGRES_USER:?Variable is not set}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Variable is not set}
 
-  # frontend:
-  #   build:
-  #     context: ./frontend
+  api:
+    build:
+      context: ./backend
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+      prestart:
+        condition: service_completed_successfully
+    env_file:
+      - .env
+    environment:
+      POSTGRES_SERVER: db
+      POSTGRES_PORT: ${POSTGRES_PORT:?Variable is not set}
+      POSTGRES_DB: ${POSTGRES_DB:?Variable is not set}
+      POSTGRES_USER: ${POSTGRES_USER:?Variable is not set}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Variable is not set}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # For development
+    volumes:
+      - ./backend/app/:/fastapi/app/:cached
+
+volumes:
+  app-db-data:

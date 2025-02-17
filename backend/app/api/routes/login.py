@@ -1,13 +1,12 @@
 from datetime import timedelta
 from typing import Annotated, Any
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordRequestForm
 
-from app import crud
-from app.api.deps import SessionDep, CurrentUser
-from app.models import Token
+from app.api.deps import AuthServiceDep, CurrentUser, SessionDep
 from app.core import security
 from app.core.config import settings
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
+from models import Token
 
 router = APIRouter(tags=["login"])
 
@@ -15,16 +14,14 @@ router = APIRouter(tags=["login"])
 @router.post("/login/access-token")
 def login_access_token(
     session: SessionDep,
-    form_data: Annotated[
-        OAuth2PasswordRequestForm,
-        Depends(),
-    ],
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    authentication_service: AuthServiceDep,
 ) -> Token:
     """
     OAuth2 compatible token login, get an access token for future requests
     """
 
-    user = crud.authenticate(
+    user = authentication_service.authenticate(
         session=session,
         email=form_data.username,
         password=form_data.password,
