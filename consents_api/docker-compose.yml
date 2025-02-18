@@ -40,7 +40,10 @@ services:
   migrator:
     image: consents_api:${CONSENTS_API_VERSION:-latest}
     restart: "no"
-    command: alembic upgrade head
+    command: >
+      alembic upgrade head &&
+      alembic revision --autogenerate && 
+      alembic upgrade head
     environment:
       CONSENTS_API_DB_HOST: consents_api-db
       CONSENTS_API_DB_PORT: 5432
@@ -50,6 +53,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - "./consents_api/db/migrations/versions/:/app/src/consents_api/db/migrations/versions:rw"
 
 
 
