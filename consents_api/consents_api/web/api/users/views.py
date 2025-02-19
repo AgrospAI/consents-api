@@ -1,7 +1,25 @@
 import uuid
+
 from fastapi import APIRouter, Body, Request
 
-router = APIRouter()
+from consents_api.web.api.users.schema import UserDTO
+
+router = APIRouter(prefix="/users", tags=["users"])
+
+
+@router.get("/{address}")
+async def get_user(address: str) -> UserDTO:
+    """Retrieves user data from the given address.
+
+    :param address: address of the user.
+    :type address: str
+    :return:
+    :rtype: str
+    """
+    return UserDTO(
+        public_key=address,
+        consents=[],
+    )
 
 
 # @router.post("/auth/generate-message")

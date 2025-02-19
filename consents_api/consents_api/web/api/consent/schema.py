@@ -12,6 +12,7 @@ class ConsentDTO(BaseModel):
 
     id: int
     asset_did: str
+    asset_owner: str
     reason: str
     state: ConsentState
     user: str

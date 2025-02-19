@@ -112,6 +112,7 @@ lint.ignore = [
     "D100",    # Missing docstring in public module
     "D202",    # No blank lines allowed after function docstring
     "ANN401",  # typing.Any are disallowed in `**kwargs
+    "ANN101",  # typing. Any are disallowed in function signatures
     "PLR0913", # Too many arguments for function call
     "D106",    # Missing docstring in public nested class
 ]
