@@ -1,5 +1,3 @@
-
-
 from sqlalchemy import text
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import create_async_engine
@@ -44,3 +42,14 @@ async def drop_database() -> None:
         )
         await conn.execute(text(disc_users))
         await conn.execute(text(f'DROP DATABASE "{settings.db_base}"'))
+
+
+def validate_key_length(key: str) -> None:
+    """Validate the length of the key.
+
+    :param key: key to validate.
+    :type key: str
+    :raises ValueError: if the key is not 42 characters long.
+    """
+    if len(key) != 42:
+        raise ValueError("Key must be 42 characters long.")

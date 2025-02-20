@@ -15,13 +15,9 @@ class Consent(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     asset_did: Mapped[str] = mapped_column(String(length=80))
-
     asset_owner: Mapped[str] = mapped_column(String(length=80))
-
     reason: Mapped[str] = mapped_column(String(length=600))
-
     state: Mapped[ConsentState]
-
     user_public_key: Mapped[str] = mapped_column(String, ForeignKey("user.public_key"))
 
     user: Mapped["User"] = relationship(back_populates="consents")

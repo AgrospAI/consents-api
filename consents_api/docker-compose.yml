@@ -1,33 +1,12 @@
 services:
-  api: &main_app
-    build:
-      context: .
-      dockerfile: ./Dockerfile
-    image: consents_api:${CONSENTS_API_VERSION:-latest}
-    restart: always
-    env_file:
-      - .env
-    ports:
-      - "${API_PORT}:8000"
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      CONSENTS_API_HOST: 0.0.0.0
-      CONSENTS_API_DB_HOST: consents_api-db
-      CONSENTS_API_DB_PORT: 5432
-      CONSENTS_API_DB_USER: consents_api
-      CONSENTS_API_DB_PASSWORD: ${CONSENTS_API_DB_PASS:? required}
-      CONSENTS_API_DB_PASS: consents_api
-      CONSENTS_API_DB_BASE: consents_api
 
   db:
     image: postgres:16.3-bullseye
     hostname: consents_api-db
     environment:
-      POSTGRES_PASSWORD: "consents_api"
-      POSTGRES_USER: "consents_api"
-      POSTGRES_DB: "consents_api"
+      POSTGRES_PASSWORD: ${CONSENTS_API_DB_PASS:? required}
+      POSTGRES_USER: consents_api
+      POSTGRES_DB: consents_api
     volumes:
       - consents_api-db-data:/var/lib/postgresql/data
     restart: always
@@ -36,6 +15,27 @@ services:
       interval: 2s
       timeout: 3s
       retries: 40
+  
+  api: &main_app
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: consents_api:${CONSENTS_API_VERSION:-latest}
+    restart: always
+    ports:
+      - "${API_PORT}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      CONSENTS_API_HOST: 0.0.0.0
+      CONSENTS_API_DB_HOST: consents_api-db
+      CONSENTS_API_DB_PORT: 5432
+      CONSENTS_API_DB_USER: consents_api
+      CONSENTS_API_DB_PASS: ${CONSENTS_API_DB_PASS:? required}
+      CONSENTS_API_DB_BASE: consents_api
 
   migrator:
     image: consents_api:${CONSENTS_API_VERSION:-latest}
@@ -43,11 +43,13 @@ services:
     command: >
       alembic upgrade head &&
       alembic revision --autogenerate
+    env_file:
+      - .env
     environment:
       CONSENTS_API_DB_HOST: consents_api-db
       CONSENTS_API_DB_PORT: 5432
       CONSENTS_API_DB_USER: consents_api
-      CONSENTS_API_DB_PASS: consents_api
+      CONSENTS_API_DB_PASS: ${CONSENTS_API_DB_PASS:? required}
       CONSENTS_API_DB_BASE: consents_api
     depends_on:
       db:
