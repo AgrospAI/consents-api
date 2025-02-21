@@ -1,4 +1,4 @@
-from typing import List
+from typing import TYPE_CHECKING, List, Optional
 
 from fastapi import Depends
 from sqlalchemy import select
@@ -7,6 +7,9 @@ from sqlalchemy.orm import selectinload
 
 from consents_api.db.dependencies import get_db_session
 from consents_api.db.models.users import User
+
+if TYPE_CHECKING:
+    from consents_api.web.api.users.schema import UserDTO
 
 
 class UserDAO:
@@ -37,15 +40,15 @@ class UserDAO:
 
         return raw.scalars().first() is not None
 
-    async def get_users(self) -> List[User]:
+    async def get_users(self) -> List["UserDTO"]:
         """Retrieves all users data.
 
-        :return: list of users data.
-        :rtype: List[User]
+        :return: list of user data dtos.
+        :rtype: List["UserDTO"]
         """
 
         raw = await self.session.execute(
-            select(User).options(selectinload(User.consents)),
+            select(User).options(selectinload(User.incoming_consents)),
         )
 
         return raw.scalars().all()
@@ -54,19 +57,19 @@ class UserDAO:
         self,
         *,
         public_key: str,
-    ) -> User | None:
+    ) -> Optional["UserDTO"]:
         """Retrieves user data from the given public key.
 
         :param public_key: public key of the user.
         :type public_key: str
-        :return: user data.
-        :rtype: User
+        :return: user data dto.
+        :rtype: "UserDTO"
         """
 
         raw = await self.session.execute(
             select(User)
             .where(User.public_key == public_key)
-            .options(selectinload(User.consents)),
+            .options(selectinload(User.incoming_consents)),
         )
 
         return raw.scalars().first()
@@ -75,7 +78,7 @@ class UserDAO:
         self,
         *,
         public_key: str,
-    ) -> User:
+    ) -> "UserDTO":
         """Retrieves user data from the given public key or creates a new user object.
 
         :param public_key: public key of the user.
@@ -95,7 +98,7 @@ class UserDAO:
         self,
         *,
         public_key: str,
-    ) -> User | None:
+    ) -> Optional["UserDTO"]:
         """Creates a new user object.
 
         :param public_key: public key of the user.
@@ -117,7 +120,7 @@ class UserDAO:
         self,
         *,
         public_key: str,
-    ) -> User | None:
+    ) -> Optional["UserDTO"]:
         """Removes a user object from the database.
 
         :param public_key: public key of the user.

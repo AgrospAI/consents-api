@@ -13,15 +13,14 @@ class ConsentDTO(BaseModel):
     It returned when accessing consent models from the API.
     """
 
-    id: int
     asset_did: str
-    asset_owner: str
     reason: str
     state: ConsentState
-    user_public_key: str
+    solicitor_public_key: str
+    owner_public_key: str
 
     @field_serializer("state", when_used="json")
-    def serialize_consent_state(self, value: ConsentState) -> str:
+    def serialize_state(self, state: ConsentState) -> str:
         """Serializes the consent state to a string.
 
         :param value: consent state.
@@ -29,42 +28,31 @@ class ConsentDTO(BaseModel):
         :rtype: str
         """
 
-        return value.name
+        return state.name
 
 
 class ConsentInputDTO(BaseModel):
     """DTO for creating new consent model."""
 
     asset_did: str
-    asset_owner: str
     reason: str
-    user_public_key: str
-
-    def to_dto(self) -> ConsentDTO:
-        """Converts the input DTO to the output DTO."""
-
-        return ConsentDTO(
-            asset_did=self.asset_did,
-            asset_owner=self.asset_owner,
-            reason=self.reason,
-            state=ConsentState.PENDING,
-            user=self.user_public_key,
-        )
+    solicitor_public_key: str
+    owner_public_key: str
 
     @model_validator(mode="after")
-    def validate_user_pk_length(self) -> Self:
-        """Validates the length of the user public key.
+    def validate_solicitor_public_key_length(self) -> Self:
+        """Validates the length of the solicitor public key.
 
-        :raises ValueError: if the user public key is not 42 characters long.
+        :raises ValueError: if the solicitor public key is not 42 characters long.
         :return: self instance.
         :rtype: Self
         """
 
-        utils.validate_key_length(self.asset_owner)
+        utils.validate_key_length(self.solicitor_public_key)
         return self
 
     @model_validator(mode="after")
-    def validate_asset_owner_length(self) -> Self:
+    def validate_owner_public_key_length(self) -> Self:
         """Validates the length of the asset owner.
 
         :raises ValueError: if the asset owner is not 42 characters long.
@@ -72,5 +60,24 @@ class ConsentInputDTO(BaseModel):
         :rtype: Self
         """
 
-        utils.validate_key_length(self.user_public_key)
+        utils.validate_key_length(self.owner_public_key)
+        return self
+
+
+class ConsentDeleteDTO(BaseModel):
+    """DTO for deleting consent model."""
+
+    asset_did: str
+    solicitor_public_key: str
+
+    @model_validator(mode="after")
+    def validate_solicitor_public_key_length(self) -> Self:
+        """Validates the length of the solicitor public key.
+
+        :raises ValueError: if the solicitor public key is not 42 characters long.
+        :return: self instance.
+        :rtype: Self
+        """
+
+        utils.validate_key_length(self.solicitor_public_key)
         return self

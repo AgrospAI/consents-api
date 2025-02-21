@@ -1,30 +1,32 @@
-from fastapi import APIRouter, Depends
+from typing import List
+
+from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
-from fastapi import status
 
 from consents_api.db.dao.user_dao import UserDAO
 from consents_api.web.api.users.schema import UserDTO, UserInputDTO
 from consents_api.web.utils.message import Message
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(
+    prefix="/users",
+    tags=["users"],
+)
 
 
 @router.get(
     "/",
-    response_model=list[UserDTO],
+    response_model=List[UserDTO],
 )
 async def retrieve_users(
     users_dao: UserDAO = Depends(),
-) -> list[UserDTO]:
+) -> List[UserDTO]:
     """Retrieves all users data.
 
     :return: list of users data.
-    :rtype: list[UserDTO]
+    :rtype: List[UserDTO]
     """
 
-    users = await users_dao.get_users()
-
-    return users
+    return await users_dao.get_users()
 
 
 @router.get(
@@ -89,6 +91,7 @@ async def create_user(
 
 @router.delete(
     "/{public_key}",
+    response_model=UserDTO,
     responses={status.HTTP_404_NOT_FOUND: {"model": Message}},
 )
 async def delete_user(

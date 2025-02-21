@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     """
 
     host: str = "127.0.0.1"
-    port: int = 8000
+    port: int = 8050
     # quantity of workers for uvicorn
     workers_count: int = 1
     # Enable uvicorn reloading
@@ -44,8 +44,8 @@ class Settings(BaseSettings):
     db_host: str = "localhost"
     db_port: int = 5432
     db_user: str = "consents_api"
-    db_pass: str = ""
-    db_base: str = "admin"
+    db_pass: str = "changeme"
+    db_base: str = "consents_api"
     db_echo: bool = False
 
     # This variable is used to define

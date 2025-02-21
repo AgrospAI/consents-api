@@ -23,7 +23,7 @@ services:
     image: consents_api:${CONSENTS_API_VERSION:-latest}
     restart: always
     ports:
-      - "${API_PORT}:8000"
+      - "${API_PORT}:${API_PORT}"
     depends_on:
       db:
         condition: service_healthy
@@ -31,6 +31,7 @@ services:
       - .env
     environment:
       CONSENTS_API_HOST: 0.0.0.0
+      CONSENTS_API_PORT: ${API_PORT}
       CONSENTS_API_DB_HOST: consents_api-db
       CONSENTS_API_DB_PORT: 5432
       CONSENTS_API_DB_USER: consents_api
@@ -41,8 +42,8 @@ services:
     image: consents_api:${CONSENTS_API_VERSION:-latest}
     restart: "no"
     command: >
-      alembic upgrade head &&
-      alembic revision --autogenerate
+      alembic revision --autogenerate &&
+      alembic upgrade head
     env_file:
       - .env
     environment:

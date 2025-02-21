@@ -16,4 +16,5 @@ class User(Base):
 
     public_key: Mapped[str] = mapped_column(String(length=80), primary_key=True)
 
-    consents: Mapped[Set["Consent"]] = relationship(back_populates="user")
+    incoming_consents: Mapped[Set["Consent"]] = relationship(back_populates="solicitor")
+    outgoing_consents: Mapped[Set["Consent"]] = relationship(back_populates="owner")

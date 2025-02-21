@@ -2,6 +2,7 @@ from importlib import metadata
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import UJSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -10,6 +11,8 @@ from consents_api.web.api.router import api_router
 from consents_api.web.lifespan import lifespan_setup
 
 APP_ROOT = Path(__file__).parent.parent
+
+origins = ["*"]
 
 
 def get_app() -> FastAPI:
@@ -36,5 +39,13 @@ def get_app() -> FastAPI:
     # Adds static directory.
     # This directory is used to access swagger files.
     app.mount("/static", StaticFiles(directory=APP_ROOT / "static"), name="static")
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     return app

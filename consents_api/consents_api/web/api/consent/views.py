@@ -1,14 +1,16 @@
-from encodings import cp037
 from typing import List
 
-from consents_api.db.dao.user_dao import UserDAO
 from fastapi import APIRouter, status
 from fastapi.param_functions import Depends
+from fastapi.responses import JSONResponse
 
 from consents_api.db.dao.consent_dao import ConsentDAO
-from consents_api.db.models.consents import Consent
-from consents_api.web.api.consent.schema import ConsentDTO, ConsentInputDTO
-from fastapi.responses import JSONResponse
+from consents_api.db.dao.user_dao import UserDAO
+from consents_api.web.api.consent.schema import (
+    ConsentDeleteDTO,
+    ConsentDTO,
+    ConsentInputDTO,
+)
 
 router = APIRouter(
     prefix="/consents",
@@ -34,12 +36,10 @@ async def get_consent_models(
     :return: list of consent objects from database.
     """
 
-    consents = await consent_dao.get_consents(
+    return await consent_dao.get_consents(
         limit=limit,
         offset=offset,
     )
-
-    return consents
 
 
 @router.post(
@@ -59,31 +59,32 @@ async def create_consent_model(
     """
 
     # Ensure that the owner & user exists in the database
-    await users_dao.create_user(public_key=new_consent_object.asset_owner)
-    await users_dao.create_user(public_key=new_consent_object.user_public_key)
+    await users_dao.create_user(public_key=new_consent_object.owner_public_key)
+    await users_dao.create_user(public_key=new_consent_object.solicitor_public_key)
 
     return await consent_dao.create_consent_model(consent_dto=new_consent_object)
 
 
 @router.get(
-    "/user/{public_key}",
+    "/outgoing/{owner_public_key}",
     response_model=List[ConsentDTO],
 )
 async def retrieve_user_consents(
-    public_key: str,
+    owner_public_key: str,
     limit: int = 10,
     offset: int = 0,
     consents_dao: ConsentDAO = Depends(),
 ) -> List[ConsentDTO]:
-    """Retrieves the consents of the assets owned by {public_key}.
+    """Retrieves the consents of the assets owned by {owner_public_key}.
 
     :param limit: limit of consent objects, defaults to 10.
     :param offset: offset of consent objects, defaults to 0.
     :param consent_dao: DAO for consent models.
     :return: list of consent objects from database.
     """
-    return await consents_dao.get_consents_by_asset_owner(
-        asset_owner=public_key,
+
+    return await consents_dao.filter(
+        owner_public_key=owner_public_key,
         limit=limit,
         offset=offset,
     )
@@ -106,15 +107,12 @@ async def retrieve_asset_consents(
     :param consent_dao: DAO for consent models.
     :return: list of consent objects from database.
     """
-    return await consents_dao.filter(
-        asset_did=asset_did,
-        limit=limit,
-        offset=offset,
-    )
+
+    return await consents_dao.filter(asset_did=asset_did, limit=limit, offset=offset)
 
 
 @router.delete(
-    "/{consent_id}",
+    "/",
     response_model=ConsentDTO,
     responses={
         status.HTTP_404_NOT_FOUND: {
@@ -123,7 +121,7 @@ async def retrieve_asset_consents(
     },
 )
 async def delete_consent(
-    consent_id: int,
+    consent_delete_dto: ConsentDeleteDTO,
     consent_dao: ConsentDAO = Depends(),
 ) -> ConsentDTO:
     """Deletes the consent with the given ID.
@@ -133,12 +131,15 @@ async def delete_consent(
     :return: deleted consent.
     """
 
-    consent = await consent_dao.delete_consent(consent_id=consent_id)
+    consent = await consent_dao.delete_consent(
+        asset_did=consent_delete_dto.asset_did,
+        solicitor_public_key=consent_delete_dto.solicitor_public_key,
+    )
 
     if consent is None:
         return JSONResponse(
             status_code=status.HTTP_404_NOT_FOUND,
-            content={"message": f"Consent with id `{consent_id}` not found."},
+            content={"message": "Consent not found"},
         )
 
     return consent

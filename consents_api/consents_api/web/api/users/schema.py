@@ -1,10 +1,12 @@
-from typing import Self
+from typing import TYPE_CHECKING, List, Self
 
-from pydantic import BaseModel, computed_field, model_validator
+from pydantic import BaseModel, Field, computed_field, model_validator
 
 from consents_api.db import utils
 from consents_api.db.models.consent_states import ConsentState
-from consents_api.web.api.consent.schema import ConsentDTO
+
+if TYPE_CHECKING:
+    from consents_api.web.api.consent.schema import ConsentDTO
 
 
 class UserDTO(BaseModel):
@@ -15,19 +17,24 @@ class UserDTO(BaseModel):
     """
 
     public_key: str
-    consents: list["ConsentDTO"]
+    incoming_consents: List["ConsentDTO"] = Field(exclude=True)
+    outgoing_consents: List["ConsentDTO"] = Field(exclude=True)
 
     @computed_field
     @property
-    def pending_consents(self) -> int:
-        """Return the number of pending consents."""
-        return len([c for c in self.consents if c.state == ConsentState.PENDING])
+    def incoming_pending_consents(self) -> int:
+        """Return the number of pending incoming consent petitions."""
+        return len(
+            [c for c in self.incoming_consents if c.state == ConsentState.PENDING],
+        )
 
     @computed_field
     @property
-    def total_consents(self) -> int:
-        """Return the total number of consents."""
-        return len(self.consents)
+    def outgoing_pending_consents(self) -> int:
+        """Return the number of pending outgoing consent petitions."""
+        return len(
+            [c for c in self.outgoing_consents if c.state == ConsentState.PENDING],
+        )
 
 
 class UserInputDTO(BaseModel):
