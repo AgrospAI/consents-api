@@ -1,4 +1,4 @@
-FROM python:3.13-slim-bookworm as installer
+FROM python:3.13-slim-bookworm AS installer
 
 # The installer requires curl (and certificates) to download the release archive
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
@@ -13,11 +13,11 @@ RUN sh /uv-installer.sh && rm /uv-installer.sh
 ENV PATH="/root/.local/bin/:$PATH"
 
 WORKDIR /env
-ADD pyproject.toml uv.lock /env/
+COPY pyproject.toml uv.lock /env/
 
 RUN uv venv .venv && uv sync
 
-FROM python:3.13-slim-bookworm as runner
+FROM python:3.13-slim-bookworm AS runner
 
 WORKDIR /app
 
@@ -29,4 +29,4 @@ ENV PYTHONUNBUFFERED 1
 
 EXPOSE 8000
 
-CMD ["/.venv/bin/python", "manage.py", "runserver"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

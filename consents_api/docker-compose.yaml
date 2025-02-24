@@ -35,15 +35,18 @@ services:
   migrator:
     build: .
     restart: "no"
-    command: >
-      python manage.py makemigrations && \
-      python manage.py migrate
+    command: bash -c "
+        python manage.py migrate &&
+        python manage.py admin_from_env
+      "
     environment:
       API_DB_HOST: db
       API_DB_PORT: 5432
       API_DB_USER: postgres
       API_DB_PASS: example
       API_DB_NAME: consents
+      ADMIN_USERNAME: ${ADMIN_USERNAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
     depends_on:
       db:
         condition: service_healthy
