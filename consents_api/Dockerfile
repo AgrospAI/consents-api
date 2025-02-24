@@ -1,32 +1,32 @@
-FROM python:3.11.4-slim-bullseye AS prod
-RUN apt-get update && apt-get install -y \
-  gcc \
-  && rm -rf /var/lib/apt/lists/*
+FROM python:3.13-slim-bookworm as installer
 
+# The installer requires curl (and certificates) to download the release archive
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
 
-RUN pip install poetry==1.8.2
+# Download the latest installer
+ADD https://astral.sh/uv/install.sh /uv-installer.sh
 
-# Configuring poetry
-RUN poetry config virtualenvs.create false
-RUN poetry config cache-dir /tmp/poetry_cache
+# Run the installer then remove it
+RUN sh /uv-installer.sh && rm /uv-installer.sh
 
-# Copying requirements of a project
-COPY pyproject.toml poetry.lock /app/src/
-WORKDIR /app/src
+# Ensure the installed binary is on the `PATH`
+ENV PATH="/root/.local/bin/:$PATH"
 
-# Installing requirements
-RUN --mount=type=cache,target=/tmp/poetry_cache poetry install --only main
-# Removing gcc
-RUN apt-get purge -y \
-  gcc \
-  && rm -rf /var/lib/apt/lists/*
+WORKDIR /env
+ADD pyproject.toml uv.lock /env/
 
-# Copying actuall application
-COPY . /app/src/
-RUN --mount=type=cache,target=/tmp/poetry_cache poetry install --only main
+RUN uv venv .venv && uv sync
 
-CMD ["/usr/local/bin/python", "-m", "consents_api"]
+FROM python:3.13-slim-bookworm as runner
 
-FROM prod AS dev
+WORKDIR /app
 
-RUN --mount=type=cache,target=/tmp/poetry_cache poetry install
+COPY --from=installer /env/.venv /.venv
+ENV PATH="/.venv/bin/:$PATH"
+
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+EXPOSE 8000
+
+CMD ["/.venv/bin/python", "manage.py", "runserver"]

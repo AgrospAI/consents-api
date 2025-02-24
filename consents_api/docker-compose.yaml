@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:16.4-bullseye
+    environment:
+      POSTGRES_DB: consents
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: example
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: always
+    shm_size: 128mb
+    healthcheck:
+      test: pg_isready -U postgres
+      interval: 2s
+      timeout: 3s
+      retries: 40
+  
+  consents-api:
+    build: .
+    restart: always
+    ports:
+      - "${CONSENTS_API_PORT}:8000"
+    environment:
+      API_DB_HOST: db
+      API_DB_PORT: 5432
+      API_DB_USER: postgres
+      API_DB_PASS: example
+      API_DB_NAME: consents
+    volumes:
+      - ./project/:/app:cached
+    depends_on:
+      db:
+        condition: service_healthy
+
+  migrator:
+    build: .
+    restart: "no"
+    command: >
+      python manage.py makemigrations && \
+      python manage.py migrate
+    environment:
+      API_DB_HOST: db
+      API_DB_PORT: 5432
+      API_DB_USER: postgres
+      API_DB_PASS: example
+      API_DB_NAME: consents
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./project/:/app:rw
+
+volumes:
+  pgdata:
