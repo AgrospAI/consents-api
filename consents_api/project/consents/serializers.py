@@ -19,10 +19,14 @@ class ConsentSerializer(serializers.ModelSerializer):
     asset = serializers.CharField(source="asset.did")
     owner = serializers.CharField(source="owner.address")
     solicitor = serializers.CharField(source="solicitor.address")
+    state = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Consent
         fields = ("id", "reason", "state", "asset", "owner", "solicitor")
+
+    def get_state(self, obj):
+        return obj.get_state_display()
 
 
 class GetOrCreateConsentSerializer(serializers.ModelSerializer):

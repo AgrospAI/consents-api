@@ -15,9 +15,3 @@ class UsersViewset(
     queryset = models.ConsentsUser.objects.all()
     serializer_class = serializers.UserSerializer
     lookup_field = "address"
-
-    def get_serializer_class(self):
-        if self.action == "create":
-            return serializers.UserCreationSerializer
-
-        return self.serializer_class
