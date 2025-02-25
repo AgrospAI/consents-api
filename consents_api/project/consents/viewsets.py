@@ -1,4 +1,5 @@
 from rest_framework import mixins, viewsets
+from django.db.models import Q
 
 from . import models, serializers
 
@@ -27,6 +28,24 @@ class ConsentsViewset(
             return serializers.UpdateConsentSerializer
 
         return self.serializer_class
+
+    def get_queryset(self):
+        query_params = self.request.query_params
+
+        special = {
+            "asset": "asset__did",
+            "owner": "owner__address",
+            "solicitor": "solicitor__address",
+        }
+
+        query = Q()
+        for param, value in query_params.items():
+            if param in special:
+                query |= Q(**{special[param]: value})
+            else:
+                query |= Q(**{param: value})
+
+        return self.queryset.filter(query)
 
     # TODO: Make an instance of the consent history
     # def perform_update(self, serializer):
