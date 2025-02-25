@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
-from rest_framework import mixins, viewsets
+from rest_framework import mixins, viewsets, response
+from rest_framework.decorators import action
 
+from consents.serializers import ConsentSerializer
 from . import models, serializers
 
 User = get_user_model()
@@ -15,3 +17,19 @@ class UsersViewset(
     queryset = models.ConsentsUser.objects.all()
     serializer_class = serializers.UserSerializer
     lookup_field = "address"
+
+    @action(detail=True, methods=["get"])
+    def incoming(self, request, address=None):
+        user = self.get_object()
+
+        consents = user.incoming_consents.all()
+        serializer = ConsentSerializer(consents, many=True)
+        return response.Response(serializer.data)
+
+    @action(detail=True, methods=["get"])
+    def outgoing(self, request, address=None):
+        user = self.get_object()
+
+        consents = user.outgoing_consents.all()
+        serializer = ConsentSerializer(consents, many=True)
+        return response.Response(serializer.data)
