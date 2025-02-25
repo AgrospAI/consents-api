@@ -67,6 +67,8 @@ class Consent(models.Model):
         related_name="incoming_consents",
     )
 
+    created_at = models.DateTimeField(auto_now_add=True)
+
     def __str__(self):
         return f"{self.solicitor} -> {self.asset} ({self.state})"
 

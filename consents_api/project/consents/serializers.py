@@ -23,7 +23,7 @@ class ConsentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Consent
-        fields = ("id", "reason", "state", "asset", "owner", "solicitor")
+        fields = ("id", "reason", "state", "asset", "owner", "solicitor", "created_at")
 
     def get_state(self, obj):
         return obj.get_state_display()
