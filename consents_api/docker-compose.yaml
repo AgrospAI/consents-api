@@ -36,7 +36,7 @@ services:
     build: .
     restart: "no"
     command: bash -c "
-        python manage.py makemigration &&
+        python manage.py makemigrations users consents &&
         python manage.py migrate &&
         python manage.py admin_from_env
       "

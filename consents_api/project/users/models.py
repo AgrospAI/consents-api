@@ -6,4 +6,4 @@ class ConsentsUser(AbstractUser):
     class Meta:
         db_table = "users"
 
-    address = models.CharField(max_length=80, default="-", unique=True)
+    address = models.CharField(max_length=80, unique=True)

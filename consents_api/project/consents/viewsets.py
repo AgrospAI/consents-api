@@ -1,6 +1,11 @@
 from rest_framework import mixins, viewsets
 
-from consents import models, serializers
+from . import models, serializers
+
+
+class AssetsViewset(mixins.ListModelMixin, viewsets.GenericViewSet):
+    queryset = models.Asset.objects.all()
+    serializer_class = serializers.AssetSerializer
 
 
 class ConsentsViewset(
@@ -14,14 +19,15 @@ class ConsentsViewset(
     queryset = models.Consent.objects.all()
     serializer_class = serializers.ConsentSerializer
 
-    def perform_create(self, serializer):
-        serializer.save(solicitor=self.request.user)
-
     def get_serializer_class(self):
         if self.action == "create":
-            return serializers.CreateConsentSerializer
+            return serializers.GetOrCreateConsentSerializer
 
         if self.action in ["update", "partial_update"]:
             return serializers.UpdateConsentSerializer
 
-        return serializers.ConsentSerializer
+        return self.serializer_class
+
+    # TODO: Make an instance of the consent history
+    # def perform_update(self, serializer):
+    #     return super().perform_update(serializer)

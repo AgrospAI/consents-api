@@ -8,8 +8,14 @@ User = get_user_model()
 class Asset(models.Model):
     class Meta:
         db_table = "asset"
+        indexes = [
+            models.Index(fields=["did", "owner"]),
+        ]
 
-    did = models.CharField(max_length=255, unique=True)
+    did = models.CharField(
+        max_length=255,
+        unique=True,
+    )
     owner = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -32,13 +38,12 @@ class Consent(models.Model):
         db_table = "consent"
         constraints = [
             constraints.UniqueConstraint(
-                fields=["solicitor", "asset_did"],
+                fields=["solicitor", "asset"],
                 name="unique_consent",
                 deferrable=models.Deferrable.IMMEDIATE,
             )
         ]
 
-    asset_did = models.CharField(max_length=255)
     reason = models.TextField()
     state = models.CharField(
         max_length=1,
@@ -46,6 +51,11 @@ class Consent(models.Model):
         default=States.PENDING,
     )
 
+    asset = models.ForeignKey(
+        Asset,
+        on_delete=models.CASCADE,
+        related_name="consents",
+    )
     solicitor = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
