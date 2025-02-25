@@ -1,3 +1,7 @@
 from django.contrib import admin
 
-# Register your models here.
+from . import models
+
+admin.site.register(models.Asset)
+admin.site.register(models.Consent)
+admin.site.register(models.ConsentHistory)

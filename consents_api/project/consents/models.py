@@ -5,6 +5,21 @@ from django.db.models import constraints
 User = get_user_model()
 
 
+class Asset(models.Model):
+    class Meta:
+        db_table = "asset"
+
+    did = models.CharField(max_length=255, unique=True)
+    owner = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="assets",
+    )
+
+    def __str__(self):
+        return self.did
+
+
 class Consent(models.Model):
     class States(models.TextChoices):
         ACTIVE = "A", "Active"
@@ -41,3 +56,26 @@ class Consent(models.Model):
         on_delete=models.CASCADE,
         related_name="incoming_consents",
     )
+
+    def __str__(self):
+        return f"{self.solicitor} -> {self.asset} ({self.state})"
+
+
+class ConsentHistory(models.Model):
+    class Meta:
+        db_table = "consents_history"
+        verbose_name_plural = "consents history"
+
+    consent = models.ForeignKey(
+        Consent,
+        on_delete=models.CASCADE,
+        related_name="history",
+    )
+    state = models.CharField(
+        max_length=1,
+        choices=Consent.States.choices,
+    )
+    updated_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.consent} ({self.state})"
