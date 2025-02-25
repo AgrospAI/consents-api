@@ -22,7 +22,7 @@ class ConsentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Consent
-        fields = ("reason", "state", "asset", "owner", "solicitor")
+        fields = ("id", "reason", "state", "asset", "owner", "solicitor")
 
 
 class GetOrCreateConsentSerializer(serializers.ModelSerializer):
@@ -41,32 +41,55 @@ class GetOrCreateConsentSerializer(serializers.ModelSerializer):
         Create the instances of the given asset, owner and solicitor if they do not exist.
         """
 
+        def get_or_create(cls, get_kwargs, create_kwargs=None):
+            try:
+                return cls.objects.get(**get_kwargs)
+            except cls.DoesNotExist:
+                kwargs = create_kwargs if create_kwargs else get_kwargs
+                return cls.objects.create(**kwargs)
+
+        owner_address = validated_data.pop("owner")
+        solicitor_address = validated_data.pop("solicitor")
+
         # Get/Create the owner and solicitor instances
-        owner_instance, _ = User.objects.get_or_create(
-            address=validated_data.pop("owner"),
+        owner_instance = get_or_create(
+            User,
+            {"address": owner_address},
+            {"address": owner_address, "username": f"user_{owner_address}"},
         )
-        solicitor_instance, _ = User.objects.get_or_create(
-            address=validated_data.pop("solicitor"),
+        solicitor_instance = get_or_create(
+            User,
+            {"address": solicitor_address},
+            {"address": solicitor_address, "username": f"user_{solicitor_address}"},
         )
 
         # TODO: Remove owner from the fields list, since the asset should be linked to the user
         #       And it should be retrieved from the blockchain
         # Get/Create the asset instance (Temporal solution)
         asset_did = validated_data.pop("asset")
-        try:
-            asset_instance = models.Asset.objects.get(did=asset_did)
-        except models.Asset.DoesNotExist:
-            asset_instance = models.Asset.objects.create(
-                did=asset_did,
-                owner=owner_instance,
-            )
-
-        return models.Consent.objects.create(
-            asset=asset_instance,
-            owner=owner_instance,
-            solicitor=solicitor_instance,
-            **validated_data,
+        asset_instance = get_or_create(
+            models.Asset,
+            {"did": asset_did},
+            {"did": asset_did, "owner": owner_instance},
         )
+
+        # Get/Create the consent instance
+        consent_instance = get_or_create(
+            models.Consent,
+            {
+                "asset": asset_instance,
+                "owner": owner_instance,
+                "solicitor": solicitor_instance,
+            },
+            {
+                "asset": asset_instance,
+                "owner": owner_instance,
+                "solicitor": solicitor_instance,
+                **validated_data,
+            },
+        )
+
+        return consent_instance
 
 
 class UpdateConsentSerializer(serializers.ModelSerializer):

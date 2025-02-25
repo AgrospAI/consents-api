@@ -9,12 +9,12 @@ User = get_user_model()
 class UsersViewset(
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
-    mixins.CreateModelMixin,
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet,
 ):
     queryset = models.ConsentsUser.objects.all()
     serializer_class = serializers.UserSerializer
+    lookup_field = "address"
 
     def get_serializer_class(self):
         if self.action == "create":
