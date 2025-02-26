@@ -43,6 +43,9 @@ class GetOrCreateConsentSerializer(serializers.ModelSerializer):
         model = models.Consent
         fields = ("asset", "reason", "solicitor", "owner")
 
+    def to_representation(self, instance):
+        return ConsentSerializer(instance).data
+
     @transaction.atomic  # Ensure that the whole DB transaction is atomic. If any operation fails ROLLBACK.
     def create(self, validated_data):
         """
