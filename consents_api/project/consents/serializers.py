@@ -100,3 +100,9 @@ class UpdateConsentSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Consent
         fields = ("state",)
+
+    def to_representation(self, instance):
+        # Use full ConsentState enum
+        instance.state = instance.get_state_display()
+
+        return super().to_representation(instance)
