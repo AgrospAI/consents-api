@@ -16,17 +16,21 @@ class AssetSerializer(serializers.ModelSerializer):
 
 
 class ConsentSerializer(serializers.ModelSerializer):
-    asset = serializers.CharField(source="asset.did")
-    owner = serializers.CharField(source="owner.address")
-    solicitor = serializers.CharField(source="solicitor.address")
-    state = serializers.SerializerMethodField()
-
     class Meta:
         model = models.Consent
         fields = ("id", "reason", "state", "asset", "owner", "solicitor", "created_at")
 
-    def get_state(self, obj):
-        return obj.get_state_display()
+    def to_representation(self, instance):
+        return {
+            "asset": instance.asset.did,
+            "owner": instance.owner.address,
+            "solicitor": instance.solicitor.address,
+            # Use full ConsentState enum
+            "state": instance.get_state_display(),
+            "reason": instance.reason,
+            # Use unix timestamp for created_at for easier frontend handling
+            "created_at": instance.created_at.timestamp(),
+        }
 
 
 class GetOrCreateConsentSerializer(serializers.ModelSerializer):
