@@ -22,7 +22,7 @@ class UsersViewset(
     def incoming(self, request, address=None):
         user = self.get_object()
 
-        consents = user.incoming_consents.all()
+        consents = user.incoming_consents.all().order_by("created_at")
         serializer = ConsentSerializer(consents, many=True)
         return response.Response(serializer.data)
 
@@ -30,6 +30,6 @@ class UsersViewset(
     def outgoing(self, request, address=None):
         user = self.get_object()
 
-        consents = user.outgoing_consents.all()
+        consents = user.outgoing_consents.all().order_by("created_at")
         serializer = ConsentSerializer(consents, many=True)
         return response.Response(serializer.data)

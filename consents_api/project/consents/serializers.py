@@ -22,6 +22,7 @@ class ConsentSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         return {
+            "id": instance.id,
             "asset": instance.asset.did,
             "owner": instance.owner.address,
             "solicitor": instance.solicitor.address,
