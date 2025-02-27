@@ -71,6 +71,10 @@ class Consent(models.Model):
     def __str__(self):
         return f"{self.solicitor} -> {self.asset} ({self.state})"
 
+    @property
+    def timestamp(self) -> float:
+        return self.created_at.timestamp()
+
 
 class ConsentHistory(models.Model):
     class Meta:
@@ -90,3 +94,7 @@ class ConsentHistory(models.Model):
 
     def __str__(self):
         return f"{self.consent} ({self.state})"
+
+    @property
+    def timestamp(self) -> float:
+        return self.updated_at.timestamp()

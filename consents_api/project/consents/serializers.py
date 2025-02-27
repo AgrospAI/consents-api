@@ -15,27 +15,39 @@ class AssetSerializer(serializers.ModelSerializer):
         fields = ("did", "owner")
 
 
+class OverallConsentHistorySerializer(serializers.ModelSerializer):
+    state = serializers.CharField(source="get_state_display")
+    updated_at = serializers.FloatField(source="timestamp")
+
+    class Meta:
+        model = models.ConsentHistory
+        fields = ("state", "updated_at")
+
+
 class ConsentSerializer(serializers.ModelSerializer):
+    asset = serializers.CharField(source="asset.did")
+    owner = serializers.CharField(source="owner.address")
+    solicitor = serializers.CharField(source="solicitor.address")
+
+    state = serializers.CharField(source="get_state_display")
+    created_at = serializers.FloatField(source="timestamp")
+    history = OverallConsentHistorySerializer(many=True)
+
     class Meta:
         model = models.Consent
-        fields = ("id", "reason", "state", "asset", "owner", "solicitor", "created_at")
-
-    def to_representation(self, instance):
-        return {
-            "id": instance.id,
-            "asset": instance.asset.did,
-            "owner": instance.owner.address,
-            "solicitor": instance.solicitor.address,
-            # Use full ConsentState enum
-            "state": instance.get_state_display(),
-            "reason": instance.reason,
-            # Use unix timestamp for created_at for easier frontend handling
-            "created_at": instance.created_at.timestamp(),
-        }
+        fields = (
+            "id",
+            "reason",
+            "state",
+            "asset",
+            "owner",
+            "solicitor",
+            "created_at",
+            "history",
+        )
 
 
 class GetOrCreateConsentSerializer(serializers.ModelSerializer):
-    # Identifiable attributes to retrieve/create the instances
     asset = serializers.CharField()
     solicitor = serializers.CharField()
     owner = serializers.CharField()
@@ -105,12 +117,19 @@ class GetOrCreateConsentSerializer(serializers.ModelSerializer):
 
 
 class UpdateConsentSerializer(serializers.ModelSerializer):
+    state = serializers.ChoiceField(choices=models.Consent.States.choices)
+
     class Meta:
         model = models.Consent
         fields = ("state",)
 
-    def to_representation(self, instance):
-        # Use full ConsentState enum
-        instance.state = instance.get_state_display()
+    def update(self, instance, validated_data):
+        # Create a new ConsentHistory instance with the changes
+        models.ConsentHistory.objects.create(
+            consent=instance,
+            state=validated_data["state"],
+        )
 
-        return super().to_representation(instance)
+        print(f"Consent {instance.id} updated to {validated_data['state']}")
+
+        return super().update(instance, validated_data)

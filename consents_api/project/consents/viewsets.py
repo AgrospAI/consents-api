@@ -4,9 +4,14 @@ from django.db.models import Q
 from . import models, serializers
 
 
-class AssetsViewset(mixins.ListModelMixin, viewsets.GenericViewSet):
+class AssetsViewset(
+    mixins.RetrieveModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet,
+):
     queryset = models.Asset.objects.all()
     serializer_class = serializers.AssetSerializer
+    lookup_field = "did"
 
 
 class ConsentsViewset(
