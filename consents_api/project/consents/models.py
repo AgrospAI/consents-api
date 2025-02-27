@@ -28,9 +28,8 @@ class Asset(models.Model):
 
 class Consent(models.Model):
     class States(models.TextChoices):
-        ACTIVE = "A", "Active"
+        ACCEPTED = "A", "Accepted"
         PENDING = "P", "Pending"
-        INACTIVE = "I", "Inactive"
         REJECTED = "R", "Rejected"
         DELETED = "D", "Deleted"
 

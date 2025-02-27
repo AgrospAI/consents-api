@@ -45,7 +45,7 @@ class ConsentsViewset(
             else:
                 query |= Q(**{param: value})
 
-        return self.queryset.filter(query)
+        return self.queryset.filter(query).order_by("-created_at")
 
     # TODO: Make an instance of the consent history
     # def perform_update(self, serializer):

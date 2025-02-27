@@ -16,17 +16,22 @@ class AssetSerializer(serializers.ModelSerializer):
 
 
 class ConsentSerializer(serializers.ModelSerializer):
-    asset = serializers.CharField(source="asset.did")
-    owner = serializers.CharField(source="owner.address")
-    solicitor = serializers.CharField(source="solicitor.address")
-    state = serializers.SerializerMethodField()
-
     class Meta:
         model = models.Consent
         fields = ("id", "reason", "state", "asset", "owner", "solicitor", "created_at")
 
-    def get_state(self, obj):
-        return obj.get_state_display()
+    def to_representation(self, instance):
+        return {
+            "id": instance.id,
+            "asset": instance.asset.did,
+            "owner": instance.owner.address,
+            "solicitor": instance.solicitor.address,
+            # Use full ConsentState enum
+            "state": instance.get_state_display(),
+            "reason": instance.reason,
+            # Use unix timestamp for created_at for easier frontend handling
+            "created_at": instance.created_at.timestamp(),
+        }
 
 
 class GetOrCreateConsentSerializer(serializers.ModelSerializer):
@@ -38,6 +43,9 @@ class GetOrCreateConsentSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Consent
         fields = ("asset", "reason", "solicitor", "owner")
+
+    def to_representation(self, instance):
+        return ConsentSerializer(instance).data
 
     @transaction.atomic  # Ensure that the whole DB transaction is atomic. If any operation fails ROLLBACK.
     def create(self, validated_data):
@@ -100,3 +108,9 @@ class UpdateConsentSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Consent
         fields = ("state",)
+
+    def to_representation(self, instance):
+        # Use full ConsentState enum
+        instance.state = instance.get_state_display()
+
+        return super().to_representation(instance)
