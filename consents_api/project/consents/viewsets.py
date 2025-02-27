@@ -1,27 +1,16 @@
 from rest_framework import mixins, viewsets
 from django.db.models import Q
 
-from . import models, serializers
+from consents import models, serializers
 
 
-class AssetsViewset(
-    mixins.RetrieveModelMixin,
-    mixins.ListModelMixin,
-    viewsets.GenericViewSet,
-):
+class AssetsViewset(viewsets.ReadOnlyModelViewSet):
     queryset = models.Asset.objects.all()
     serializer_class = serializers.AssetSerializer
     lookup_field = "did"
 
 
-class ConsentsViewset(
-    mixins.RetrieveModelMixin,
-    mixins.ListModelMixin,
-    mixins.UpdateModelMixin,
-    mixins.CreateModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet,
-):
+class ConsentsViewset(viewsets.ModelViewSet):
     queryset = models.Consent.objects.all()
     serializer_class = serializers.ConsentSerializer
 

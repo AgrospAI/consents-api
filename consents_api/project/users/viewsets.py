@@ -19,7 +19,7 @@ class UsersViewset(
     lookup_field = "address"
 
     @action(detail=True, methods=["get"])
-    def incoming(self, request, address=None):
+    def incoming(self, *args, **kwargs):
         user = self.get_object()
 
         consents = user.incoming_consents.all().order_by("created_at")
@@ -27,7 +27,7 @@ class UsersViewset(
         return response.Response(serializer.data)
 
     @action(detail=True, methods=["get"])
-    def outgoing(self, request, address=None):
+    def outgoing(self, *args, **kwargs):
         user = self.get_object()
 
         consents = user.outgoing_consents.all().order_by("created_at")

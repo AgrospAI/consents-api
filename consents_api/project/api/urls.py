@@ -1,7 +1,8 @@
-from consents.api.urls import router as consents_router
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
-from users.api.urls import router as users_router
+
+from consents.router import router as consents_router
+from users.router import router as users_router
 
 router = DefaultRouter()
 

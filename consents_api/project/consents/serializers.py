@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from rest_framework import serializers
 
-from . import models
+from consents import models
 
 User = get_user_model()
 
@@ -31,7 +31,7 @@ class ConsentSerializer(serializers.ModelSerializer):
 
     state = serializers.CharField(source="get_state_display")
     created_at = serializers.FloatField(source="timestamp")
-    history = OverallConsentHistorySerializer(many=True)
+    history = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Consent
@@ -45,6 +45,12 @@ class ConsentSerializer(serializers.ModelSerializer):
             "created_at",
             "history",
         )
+
+    def get_history(self, instance):
+        return OverallConsentHistorySerializer(
+            instance.history.all().order_by("-updated_at"),
+            many=True,
+        ).data
 
 
 class GetOrCreateConsentSerializer(serializers.ModelSerializer):

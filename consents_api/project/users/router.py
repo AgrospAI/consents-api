@@ -1,6 +1,6 @@
 from rest_framework.routers import SimpleRouter
 
-from .. import viewsets
+from users import viewsets
 
 router = SimpleRouter()
 
