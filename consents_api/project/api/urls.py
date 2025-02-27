@@ -1,15 +1,13 @@
+from consents.api.urls import router as consents_router
 from django.urls import include, path
-
 from rest_framework.routers import DefaultRouter
-
-from consents.viewsets import AssetsViewset, ConsentsViewset
-from users.viewsets import UsersViewset
+from users.api.urls import router as users_router
 
 router = DefaultRouter()
 
-router.register(r"assets", AssetsViewset, "assets")
-router.register(r"consents", ConsentsViewset, "consents")
-router.register(r"users", UsersViewset, "users")
+router.registry.extend(consents_router.registry)
+router.registry.extend(users_router.registry)
+
 
 urlpatterns = [
     path("", include(router.urls)),
