@@ -8,7 +8,11 @@ User = get_user_model()
 
 
 class Command(BaseCommand):
-    help = "Creates a superuser from env"
+    help = """
+    Creates a superuser from environment variables: 
+        - ADMIN_USERNAME: the username must be unique
+        - ADMIN_PASSWORD: the password must be at least 8 characters long
+    """
 
     def handle(self, *args, **options):
         self.stdout.write("Admin user creation... ", ending="")

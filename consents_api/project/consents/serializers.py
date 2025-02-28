@@ -31,26 +31,10 @@ class ConsentSerializer(serializers.ModelSerializer):
 
     state = serializers.CharField(source="get_state_display")
     created_at = serializers.FloatField(source="timestamp")
-    history = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Consent
-        fields = (
-            "id",
-            "reason",
-            "state",
-            "asset",
-            "owner",
-            "solicitor",
-            "created_at",
-            "history",
-        )
-
-    def get_history(self, instance):
-        return OverallConsentHistorySerializer(
-            instance.history.all().order_by("-updated_at"),
-            many=True,
-        ).data
+        fields = ("id", "reason", "state", "asset", "owner", "solicitor", "created_at")
 
 
 class GetOrCreateConsentSerializer(serializers.ModelSerializer):
@@ -139,3 +123,6 @@ class UpdateConsentSerializer(serializers.ModelSerializer):
         print(f"Consent {instance.id} updated to {validated_data['state']}")
 
         return super().update(instance, validated_data)
+
+    def to_representation(self, instance):
+        return ConsentSerializer(instance).data

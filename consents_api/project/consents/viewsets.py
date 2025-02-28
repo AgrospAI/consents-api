@@ -1,25 +1,34 @@
-from rest_framework import mixins, viewsets
 from django.db.models import Q
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from consents import models, serializers
+from consents.models import Asset, Consent
+from consents.serializers import (
+    AssetSerializer,
+    ConsentSerializer,
+    GetOrCreateConsentSerializer,
+    OverallConsentHistorySerializer,
+    UpdateConsentSerializer,
+)
 
 
-class AssetsViewset(viewsets.ReadOnlyModelViewSet):
-    queryset = models.Asset.objects.all()
-    serializer_class = serializers.AssetSerializer
+class AssetsViewset(ReadOnlyModelViewSet):
+    queryset = Asset.objects.all()
+    serializer_class = AssetSerializer
     lookup_field = "did"
 
 
-class ConsentsViewset(viewsets.ModelViewSet):
-    queryset = models.Consent.objects.all()
-    serializer_class = serializers.ConsentSerializer
+class ConsentsViewset(ModelViewSet):
+    queryset = Consent.objects.all()
+    serializer_class = ConsentSerializer
 
     def get_serializer_class(self):
         if self.action == "create":
-            return serializers.GetOrCreateConsentSerializer
+            return GetOrCreateConsentSerializer
 
         if self.action in ["update", "partial_update"]:
-            return serializers.UpdateConsentSerializer
+            return UpdateConsentSerializer
 
         return self.serializer_class
 
@@ -40,3 +49,11 @@ class ConsentsViewset(viewsets.ModelViewSet):
                 query |= Q(**{param: value})
 
         return self.queryset.filter(query).order_by("-created_at")
+
+    @action(detail=True, methods=["get"])
+    def history(self, *args, **kwargs):
+        consent = self.get_object()
+
+        history = consent.history.all().order_by("-updated_at")
+        serializer = OverallConsentHistorySerializer(history, many=True)
+        return Response(serializer.data)

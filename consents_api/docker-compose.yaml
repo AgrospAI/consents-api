@@ -54,5 +54,18 @@ services:
     volumes:
       - ./project/:/app:rw
 
+  tester:
+    build: .
+    restart: "no"
+    command: bash -c "python manage.py test"
+    environment:
+      API_DB_HOST: db
+      API_DB_PORT: 5432
+      API_DB_USER: postgres
+      API_DB_PASS: example
+      API_DB_NAME: consents
+    volumes:
+      - ./project/:/app:ro
+
 volumes:
   pgdata:
