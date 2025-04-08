@@ -66,6 +66,11 @@ services:
       API_DB_NAME: consents
     volumes:
       - ./project/:/app:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
 
 volumes:
   pgdata:

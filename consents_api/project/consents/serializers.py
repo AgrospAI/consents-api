@@ -1,53 +1,87 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from rest_framework import serializers
+from helpers.services.aquarius import aquarius
+from rest_framework.serializers import (
+    CharField,
+    ChoiceField,
+    FloatField,
+    HyperlinkedIdentityField,
+    HyperlinkedModelSerializer,
+    ModelSerializer,
+)
 
-from consents import models
+from consents.models import Asset, Consent, ConsentHistory
+from consents.validators import DidLengthValidator
 
 User = get_user_model()
 
 
-class AssetSerializer(serializers.ModelSerializer):
-    owner = serializers.CharField(source="owner.address")
+class ListAsset(HyperlinkedModelSerializer):
+    url = HyperlinkedIdentityField(view_name="assets-detail")
 
     class Meta:
-        model = models.Asset
-        fields = ("did", "owner")
+        model = Asset
+        fields = ("url",)
 
 
-class OverallConsentHistorySerializer(serializers.ModelSerializer):
-    state = serializers.CharField(source="get_state_display")
-    updated_at = serializers.FloatField(source="timestamp")
-
-    class Meta:
-        model = models.ConsentHistory
-        fields = ("state", "updated_at")
-
-
-class ConsentSerializer(serializers.ModelSerializer):
-    asset = serializers.CharField(source="asset.did")
-    owner = serializers.CharField(source="owner.address")
-    solicitor = serializers.CharField(source="solicitor.address")
-
-    state = serializers.CharField(source="get_state_display")
-    created_at = serializers.FloatField(source="timestamp")
+class DetailAsset(ModelSerializer):
+    owner = CharField(source="owner.address")
 
     class Meta:
-        model = models.Consent
-        fields = ("id", "reason", "state", "asset", "owner", "solicitor", "created_at")
+        model = Asset
+        fields = (
+            "did",
+            "owner",
+        )
 
 
-class GetOrCreateConsentSerializer(serializers.ModelSerializer):
-    asset = serializers.CharField()
-    solicitor = serializers.CharField()
-    owner = serializers.CharField()
+class ListConsentHistory(ModelSerializer):
+    state = CharField(source="get_state_display")
+    updated_at = FloatField(source="timestamp")
 
     class Meta:
-        model = models.Consent
-        fields = ("asset", "reason", "solicitor", "owner")
+        model = ConsentHistory
+        fields = (
+            "state",
+            "updated_at",
+        )
+
+
+class ListConsent(HyperlinkedModelSerializer):
+    url = HyperlinkedIdentityField(view_name="consents-detail")
+
+    dataset = DetailAsset()
+    algorithm = DetailAsset()
+    state = CharField(source="get_state_display")
+    created_at = FloatField(source="timestamp")
+
+    class Meta:
+        model = Consent
+        fields = (
+            "url",
+            "id",
+            "state",
+            "reason",
+            "dataset",
+            "algorithm",
+            "created_at",
+        )
+
+
+class CreateConsent(ModelSerializer):
+    dataset = CharField(validators=[DidLengthValidator()])
+    algorithm = CharField(validators=[DidLengthValidator()])
+
+    class Meta:
+        model = Consent
+        fields = (
+            "reason",
+            "dataset",
+            "algorithm",
+        )
 
     def to_representation(self, instance):
-        return ConsentSerializer(instance).data
+        return ListConsent(instance).data
 
     @transaction.atomic  # Ensure that the whole DB transaction is atomic. If any operation fails ROLLBACK.
     def create(self, validated_data):
@@ -62,43 +96,55 @@ class GetOrCreateConsentSerializer(serializers.ModelSerializer):
                 kwargs = create_kwargs if create_kwargs else get_kwargs
                 return cls.objects.create(**kwargs)
 
-        owner_address = validated_data.pop("owner")
-        solicitor_address = validated_data.pop("solicitor")
+        dataset_did = validated_data.pop("dataset")
+        algorithm_did = validated_data.pop("algorithm")
+
+        # Retrieve dataset owner and algorithm owner from the blockchain
+        data_owner_address = aquarius.get_asset_owner(dataset_did)
+        algo_owner_address = aquarius.get_asset_owner(algorithm_did)
 
         # Get/Create the owner and solicitor instances
-        owner_instance = get_or_create(
+        dataset_owner_instance = get_or_create(
             User,
-            {"address": owner_address},
-            {"address": owner_address, "username": f"user_{owner_address}"},
+            {"address": data_owner_address},
+            {"address": data_owner_address, "username": f"user_{data_owner_address}"},
         )
-        solicitor_instance = get_or_create(
+        algorithm_owner_instance = get_or_create(
             User,
-            {"address": solicitor_address},
-            {"address": solicitor_address, "username": f"user_{solicitor_address}"},
+            {"address": algo_owner_address},
+            {"address": algo_owner_address, "username": f"user_{algo_owner_address}"},
         )
 
-        # TODO: Remove owner from the fields list, since the asset should be linked to the user
-        #       And it should be retrieved from the blockchain
-        # Get/Create the asset instance (Temporal solution)
-        asset_did = validated_data.pop("asset")
-        asset_instance = get_or_create(
-            models.Asset,
-            {"did": asset_did},
-            {"did": asset_did, "owner": owner_instance},
+        data_instance = get_or_create(
+            Asset,
+            {"did": dataset_did},
+            {
+                "did": dataset_did,
+                "owner": dataset_owner_instance,
+                "type": Asset.Types.DATASET,
+            },
+        )
+
+        algo_instance = get_or_create(
+            Asset,
+            {"did": algorithm_did},
+            {
+                "did": algorithm_did,
+                "owner": algorithm_owner_instance,
+                "type": Asset.Types.ALGORITHM,
+            },
         )
 
         # Get/Create the consent instance
         consent_instance = get_or_create(
-            models.Consent,
+            Consent,
             {
-                "asset": asset_instance,
-                "owner": owner_instance,
-                "solicitor": solicitor_instance,
+                "dataset": data_instance,
+                "algorithm": algo_instance,
             },
             {
-                "asset": asset_instance,
-                "owner": owner_instance,
-                "solicitor": solicitor_instance,
+                "dataset": data_instance,
+                "algorithm": algo_instance,
                 **validated_data,
             },
         )
@@ -106,16 +152,19 @@ class GetOrCreateConsentSerializer(serializers.ModelSerializer):
         return consent_instance
 
 
-class UpdateConsentSerializer(serializers.ModelSerializer):
-    state = serializers.ChoiceField(choices=models.Consent.States.choices)
+class UpdateConsent(ModelSerializer):
+    state = ChoiceField(
+        choices=Consent.States.choices,
+        source="get_state_display",
+    )
 
     class Meta:
-        model = models.Consent
+        model = Consent
         fields = ("state",)
 
     def update(self, instance, validated_data):
         # Create a new ConsentHistory instance with the changes
-        models.ConsentHistory.objects.create(
+        ConsentHistory.objects.create(
             consent=instance,
             state=validated_data["state"],
         )
@@ -123,6 +172,3 @@ class UpdateConsentSerializer(serializers.ModelSerializer):
         print(f"Consent {instance.id} updated to {validated_data['state']}")
 
         return super().update(instance, validated_data)
-
-    def to_representation(self, instance):
-        return ConsentSerializer(instance).data

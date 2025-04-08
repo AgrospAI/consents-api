@@ -5,30 +5,30 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from consents.models import Asset, Consent
 from consents.serializers import (
-    AssetSerializer,
-    ConsentSerializer,
-    GetOrCreateConsentSerializer,
-    OverallConsentHistorySerializer,
-    UpdateConsentSerializer,
+    CreateConsent,
+    DetailAsset,
+    ListConsent,
+    ListConsentHistory,
+    UpdateConsent,
 )
 
 
 class AssetsViewset(ReadOnlyModelViewSet):
     queryset = Asset.objects.all()
-    serializer_class = AssetSerializer
+    serializer_class = DetailAsset
     lookup_field = "did"
 
 
 class ConsentsViewset(ModelViewSet):
     queryset = Consent.objects.all()
-    serializer_class = ConsentSerializer
+    serializer_class = ListConsent
 
     def get_serializer_class(self):
         if self.action == "create":
-            return GetOrCreateConsentSerializer
+            return CreateConsent
 
         if self.action in ["update", "partial_update"]:
-            return UpdateConsentSerializer
+            return UpdateConsent
 
         return self.serializer_class
 
@@ -55,5 +55,5 @@ class ConsentsViewset(ModelViewSet):
         consent = self.get_object()
 
         history = consent.history.all().order_by("-updated_at")
-        serializer = OverallConsentHistorySerializer(history, many=True)
+        serializer = ListConsentHistory(history, many=True)
         return Response(serializer.data)

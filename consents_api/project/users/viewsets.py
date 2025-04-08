@@ -1,8 +1,8 @@
+from consents.serializers import ListConsent
 from django.contrib.auth import get_user_model
-from rest_framework import mixins, viewsets, response
+from rest_framework import mixins, response, viewsets
 from rest_framework.decorators import action
 
-from consents.serializers import ConsentSerializer
 from . import models, serializers
 
 User = get_user_model()
@@ -23,7 +23,7 @@ class UsersViewset(
         user = self.get_object()
 
         consents = user.incoming_consents.all().order_by("-created_at")
-        serializer = ConsentSerializer(consents, many=True)
+        serializer = ListConsent(consents, many=True)
         return response.Response(serializer.data)
 
     @action(detail=True, methods=["get"])
@@ -31,5 +31,5 @@ class UsersViewset(
         user = self.get_object()
 
         consents = user.outgoing_consents.all().order_by("-created_at")
-        serializer = ConsentSerializer(consents, many=True)
+        serializer = ListConsent(consents, many=True)
         return response.Response(serializer.data)

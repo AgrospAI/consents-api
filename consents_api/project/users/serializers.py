@@ -11,10 +11,22 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("address", "incoming_pending_consents", "outgoing_pending_consents")
+        fields = (
+            "address",
+            "assets",
+            "incoming_pending_consents",
+            "outgoing_pending_consents",
+        )
 
+    # Retrieve incoming/pending consents according to the user ownership of the asset
     def get_incoming_pending_consents(self, obj):
-        return obj.incoming_consents.filter(state=Consent.States.PENDING).count()
+        return Consent.objects.filter(
+            dataset__owner=obj,
+            state=Consent.States.PENDING,
+        ).count()
 
     def get_outgoing_pending_consents(self, obj):
-        return obj.outgoing_consents.filter(state=Consent.States.PENDING).count()
+        return Consent.objects.filter(
+            algorithm__owner=obj,
+            state=Consent.States.PENDING,
+        ).count()
