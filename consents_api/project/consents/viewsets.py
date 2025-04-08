@@ -36,9 +36,8 @@ class ConsentsViewset(ModelViewSet):
         query_params = self.request.query_params
 
         special = {
-            "asset": "asset__did",
-            "owner": "owner__address",
-            "solicitor": "solicitor__address",
+            "dataset": "dataset__owner__address",
+            "algorithm": "algorithm__owner__address",
         }
 
         query = Q()
