@@ -58,8 +58,8 @@ class ListConsent(HyperlinkedModelSerializer):
     class Meta:
         model = Consent
         fields = (
-            "url",
             "id",
+            "url",
             "state",
             "reason",
             "dataset",

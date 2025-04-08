@@ -8,6 +8,11 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     incoming_pending_consents = serializers.SerializerMethodField()
     outgoing_pending_consents = serializers.SerializerMethodField()
+    assets = serializers.HyperlinkedIdentityField(
+        view_name="assets-detail",
+        lookup_field="did",
+        many=True,
+    )
 
     class Meta:
         model = User

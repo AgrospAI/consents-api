@@ -1,3 +1,4 @@
+from consents.models import Consent
 from consents.serializers import ListConsent
 from django.contrib.auth import get_user_model
 from rest_framework import mixins, response, viewsets
@@ -22,14 +23,20 @@ class UsersViewset(
     def incoming(self, *args, **kwargs):
         user = self.get_object()
 
-        consents = user.incoming_consents.all().order_by("-created_at")
-        serializer = ListConsent(consents, many=True)
+        consents = Consent.objects.filter(
+            dataset__owner=user,
+            state=Consent.States.PENDING,
+        )
+        serializer = ListConsent(consents, many=True, context={"request": self.request})
         return response.Response(serializer.data)
 
     @action(detail=True, methods=["get"])
     def outgoing(self, *args, **kwargs):
         user = self.get_object()
 
-        consents = user.outgoing_consents.all().order_by("-created_at")
-        serializer = ListConsent(consents, many=True)
+        consents = Consent.objects.filter(
+            algorithm__owner=user,
+            state=Consent.States.PENDING,
+        )
+        serializer = ListConsent(consents, many=True, context={"request": self.request})
         return response.Response(serializer.data)
