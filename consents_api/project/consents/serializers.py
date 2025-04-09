@@ -81,7 +81,8 @@ class CreateConsent(ModelSerializer):
         )
 
     def to_representation(self, instance):
-        return ListConsent(instance).data
+        representation = ListConsent(instance, context={"request": self.context.get("request")}).data
+        return representation
 
     @transaction.atomic  # Ensure that the whole DB transaction is atomic. If any operation fails ROLLBACK.
     def create(self, validated_data):
