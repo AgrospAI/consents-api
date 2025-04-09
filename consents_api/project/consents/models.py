@@ -5,29 +5,32 @@ from django.db import models
 from django.db.models import constraints
 from helpers.validators.DidLengthValidator import DidLengthValidator
 
+from django.utils.translation import gettext_lazy as _
+
 User = get_user_model()
 
 
 class Status(models.TextChoices):
-    ACCEPTED = "A", "Accepted"
-    PENDING = "P", "Pending"
-    REJECTED = "R", "Rejected"
-    DELETED = "D", "Deleted"
+    ACCEPTED = "A", _("Accepted")
+    PENDING = "P", _("Pending")
+    DENIED = "D", _("Denied")
+    RESOLVED = "R", _("Resolved")
 
 
 class RequestFlags:
     flags = (
-        ("trusted_algorithm_publisher", "Trusted algorithm publisher"),
-        ("trusted_algorithm", "Trusted algorithm"),
-        ("trusted_credential_address", "Trusted credential address"),
+        ("trusted_algorithm_publisher", _("Trusted algorithm publisher")),
+        ("trusted_algorithm", _("Trusted algorithm")),
+        ("trusted_credential_address", _("Trusted credential address")),
+        ("allow_network_access", _("Allow network access")),
     )
 
 
-class PendingConsentsManger(models.Manager):
+class PendingConsentsManager(models.Manager):
     def pending(self):
         return super().get_queryset().filter(response__isnull=False)
 
-    def from_dataset_owner(self, owner: str):
+    def from_dataset_owner(self, owner):
         return self.pending().filter(dataset__owner=owner)
 
     def from_algorithm_owner(self, owner: str):
@@ -46,7 +49,7 @@ class Consent(models.Model):
         ]
 
     objects = models.Manager()
-    pending = PendingConsentsManger()
+    pending = PendingConsentsManager()
 
     reason = models.TextField()
 
@@ -75,7 +78,7 @@ class Consent(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.solicitor} -> {self.asset} ({self.status})"
+        return f"{self.solicitor} -> {self.dataset} & {self.algorithm} ({self.get_status_display})"
 
     @property
     def timestamp(self) -> float:
@@ -86,6 +89,10 @@ class Consent(models.Model):
         query = ConsentResponse.objects.filter(consent=self)
 
         return query.first().status if query.exists() else Status.PENDING
+
+    @property
+    def get_status_display(self) -> str:
+        return self.status.label
 
 
 class ConsentResponse(models.Model):

@@ -1,18 +1,22 @@
+from assets.models import Asset
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from helpers.models.utils import get_or_create
 from helpers.services.aquarius import aquarius
+from helpers.validators.DidLengthValidator import DidLengthValidator
 from rest_framework.serializers import (
+    BooleanField,
     CharField,
     ChoiceField,
     FloatField,
     HyperlinkedIdentityField,
     HyperlinkedModelSerializer,
+    HyperlinkedRelatedField,
     ModelSerializer,
 )
+from users.serializers import UserSerializer
 
-from assets.models import Asset
-from consents.models import Consent, Status
-from helpers.validators.DidLengthValidator import DidLengthValidator
+from consents.models import Consent, ConsentResponse, Status
 
 User = get_user_model()
 
@@ -20,17 +24,16 @@ User = get_user_model()
 class ListConsent(HyperlinkedModelSerializer):
     url = HyperlinkedIdentityField(view_name="consents-detail")
 
-    dataset = HyperlinkedIdentityField(
+    dataset = HyperlinkedRelatedField(
         view_name="assets-detail",
         lookup_field="did",
-        source="dataset.did",
+        read_only=True,
     )
-    algorithm = HyperlinkedIdentityField(
+    algorithm = HyperlinkedRelatedField(
         view_name="assets-detail",
         lookup_field="did",
-        source="algorithm.did",
+        read_only=True,
     )
-    status = CharField(source="get_status_display")
     created_at = FloatField(source="timestamp")
 
     class Meta:
@@ -38,11 +41,35 @@ class ListConsent(HyperlinkedModelSerializer):
         fields = (
             "id",
             "url",
-            "status",
             "reason",
             "dataset",
             "algorithm",
             "created_at",
+        )
+
+
+class DetailConsent(ModelSerializer):
+    dataset = HyperlinkedRelatedField(
+        view_name="assets-detail",
+        lookup_field="did",
+        read_only=True,
+    )
+    algorithm = HyperlinkedRelatedField(
+        view_name="assets-detail",
+        lookup_field="did",
+        read_only=True,
+    )
+    solicitor = UserSerializer()
+    created_at = FloatField(source="timestamp")
+
+    class Meta:
+        model = Consent
+        fields = (
+            "id",
+            "created_at",
+            "dataset",
+            "algorithm",
+            "solicitor",
         )
 
 
@@ -56,11 +83,13 @@ class CreateConsent(ModelSerializer):
             "reason",
             "dataset",
             "algorithm",
+            "solicitor",
         )
 
     def to_representation(self, instance):
-        representation = ListConsent(
-            instance, context={"request": self.context.get("request")}
+        representation = DetailConsent(
+            instance,
+            context={"request": self.context.get("request")},
         ).data
         return representation
 
@@ -69,13 +98,6 @@ class CreateConsent(ModelSerializer):
         """
         Create the instances of the given asset, owner and solicitor if they do not exist.
         """
-
-        def get_or_create(cls, get_kwargs, create_kwargs=None):
-            try:
-                return cls.objects.get(**get_kwargs)
-            except cls.DoesNotExist:
-                kwargs = create_kwargs if create_kwargs else get_kwargs
-                return cls.objects.create(**kwargs)
 
         dataset_did = validated_data.pop("dataset")
         algorithm_did = validated_data.pop("algorithm")
@@ -94,6 +116,11 @@ class CreateConsent(ModelSerializer):
             User,
             {"address": algo_owner_address},
             {"address": algo_owner_address, "username": f"user_{algo_owner_address}"},
+        )
+        solicitor_instance = get_or_create(
+            User,
+            {"address": self.context["request"].user.address},
+            {"address": self.context["request"].user.address},
         )
 
         data_instance = get_or_create(
@@ -116,16 +143,20 @@ class CreateConsent(ModelSerializer):
             },
         )
 
+        # TODO: Before creating the consent, check if the permissions asked for already exist
+
         # Get/Create the consent instance
         consent_instance = get_or_create(
             Consent,
             {
                 "dataset": data_instance,
                 "algorithm": algo_instance,
+                "solicitor": solicitor_instance,
             },
             {
                 "dataset": data_instance,
                 "algorithm": algo_instance,
+                "solicitor": solicitor_instance,
                 **validated_data,
             },
         )
@@ -139,23 +170,25 @@ class UpdateConsent(ModelSerializer):
         source="get_status_display",
     )
 
+    permitted = BooleanField(default=False)
+
     class Meta:
         model = Consent
-        fields = ("status",)
+        fields = (
+            "status",
+            "reason",
+            "permitted",
+        )
 
     def update(self, instance, validated_data):
-        # Create a new ConsentHistory instance with the changes
-        # ConsentHistory.objects.create(
-        #     consent=instance,
-        #     status=validated_data["status"],
-        # )
+        assert not instance.response, "Consent already has been response"
+
+        ConsentResponse.objects.create(
+            consent=instance,
+            status=validated_data["status"],
+            reason=validated_data["reason"],
+        )
 
         print(f"Consent {instance.id} updated to {validated_data['status']}")
 
         return super().update(instance, validated_data)
-
-
-class DetailConsent(ModelSerializer):
-    class Meta:
-        model = Consent
-        fields = "__all__"

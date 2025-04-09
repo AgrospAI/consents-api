@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 from helpers.validators.DidLengthValidator import DidLengthValidator
 
 User = get_user_model()
@@ -7,8 +8,8 @@ User = get_user_model()
 
 class Asset(models.Model):
     class Types(models.TextChoices):
-        DATASET = "D", "Dataset"
-        ALGORITHM = "A", "Algorithm"
+        DATASET = "D", _("Dataset")
+        ALGORITHM = "A", _("Algorithm")
 
     class Meta:
         db_table = "asset"
