@@ -14,7 +14,7 @@ services:
       interval: 2s
       timeout: 3s
       retries: 40
-  
+
   consents-api:
     build: .
     restart: always
@@ -35,11 +35,7 @@ services:
   migrator:
     build: .
     restart: "no"
-    command: bash -c "
-        python manage.py makemigrations users consents &&
-        python manage.py migrate &&
-        python manage.py admin_from_env
-      "
+    command: bash -c " python manage.py makemigrations users assets consents && python manage.py migrate && python manage.py admin_from_env "
     environment:
       API_DB_HOST: db
       API_DB_PORT: 5432

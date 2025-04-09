@@ -22,21 +22,15 @@ class UsersViewset(
     @action(detail=True, methods=["get"])
     def incoming(self, *args, **kwargs):
         user = self.get_object()
+        consents = Consent.pending.from_dataset_owner(user)
 
-        consents = Consent.objects.filter(
-            dataset__owner=user,
-            state=Consent.States.PENDING,
-        )
         serializer = ListConsent(consents, many=True, context={"request": self.request})
         return response.Response(serializer.data)
 
     @action(detail=True, methods=["get"])
     def outgoing(self, *args, **kwargs):
         user = self.get_object()
+        consents = Consent.pending.from_algorithm_owner(user)
 
-        consents = Consent.objects.filter(
-            algorithm__owner=user,
-            state=Consent.States.PENDING,
-        )
         serializer = ListConsent(consents, many=True, context={"request": self.request})
         return response.Response(serializer.data)

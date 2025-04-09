@@ -1,50 +1,40 @@
+from assets.models import Asset
+from bitfield import BitField
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import constraints
-
-from consents.validators import DidLengthValidator
+from helpers.validators.DidLengthValidator import DidLengthValidator
 
 User = get_user_model()
 
 
-class Asset(models.Model):
-    class Types(models.TextChoices):
-        DATASET = "D", "Dataset"
-        ALGORITHM = "A", "Algorithm"
+class Status(models.TextChoices):
+    ACCEPTED = "A", "Accepted"
+    PENDING = "P", "Pending"
+    REJECTED = "R", "Rejected"
+    DELETED = "D", "Deleted"
 
-    class Meta:
-        db_table = "asset"
-        indexes = [
-            models.Index(fields=["did", "owner"]),
-        ]
 
-    did = models.CharField(
-        max_length=255,
-        unique=True,
-        validators=[DidLengthValidator()],
-    )
-    owner = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="assets",
-    )
-    type = models.CharField(
-        max_length=1,
-        choices=Types.choices,
-        default=Types.DATASET,
+class RequestFlags:
+    flags = (
+        ("trusted_algorithm_publisher", "Trusted algorithm publisher"),
+        ("trusted_algorithm", "Trusted algorithm"),
+        ("trusted_credential_address", "Trusted credential address"),
     )
 
-    def __str__(self):
-        return self.did
+
+class PendingConsentsManger(models.Manager):
+    def pending(self):
+        return super().get_queryset().filter(response__isnull=False)
+
+    def from_dataset_owner(self, owner: str):
+        return self.pending().filter(dataset__owner=owner)
+
+    def from_algorithm_owner(self, owner: str):
+        return self.pending().filter(algorithm__owner=owner)
 
 
 class Consent(models.Model):
-    class States(models.TextChoices):
-        ACCEPTED = "A", "Accepted"
-        PENDING = "P", "Pending"
-        REJECTED = "R", "Rejected"
-        DELETED = "D", "Deleted"
-
     class Meta:
         db_table = "consent"
         constraints = [
@@ -55,13 +45,18 @@ class Consent(models.Model):
             )
         ]
 
+    objects = models.Manager()
+    pending = PendingConsentsManger()
+
     reason = models.TextField()
+
     dataset = models.ForeignKey(
         Asset,
         on_delete=models.CASCADE,
         related_name="incoming_consents",
         validators=[DidLengthValidator()],
     )
+
     algorithm = models.ForeignKey(
         Asset,
         on_delete=models.CASCADE,
@@ -69,40 +64,55 @@ class Consent(models.Model):
         validators=[DidLengthValidator()],
     )
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    state = models.CharField(
-        max_length=1,
-        choices=States.choices,
-        default=States.PENDING,
+    solicitor = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="consents",
     )
 
+    request = BitField(flags=RequestFlags.flags)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
     def __str__(self):
-        return f"{self.solicitor} -> {self.asset} ({self.state})"
+        return f"{self.solicitor} -> {self.asset} ({self.status})"
 
     @property
     def timestamp(self) -> float:
         return self.created_at.timestamp()
 
+    @property
+    def status(self) -> Status:
+        query = ConsentResponse.objects.filter(consent=self)
 
-class ConsentHistory(models.Model):
+        return query.first().status if query.exists() else Status.PENDING
+
+
+class ConsentResponse(models.Model):
     class Meta:
-        db_table = "consents_history"
-        verbose_name_plural = "consents history"
+        db_table = "consent_response"
+        verbose_name_plural = "consent responses"
 
-    consent = models.ForeignKey(
+    consent = models.OneToOneField(
         Consent,
         on_delete=models.CASCADE,
-        related_name="history",
+        related_name="response",
     )
-    state = models.CharField(
+
+    status = models.CharField(
         max_length=1,
-        choices=Consent.States.choices,
+        choices=Status.choices,
     )
-    updated_at = models.DateTimeField(auto_now_add=True)
+
+    permitted = BitField(flags=RequestFlags.flags)
+
+    last_updated_at = models.DateTimeField(auto_now_add=True)
+
+    reason = models.TextField()
 
     def __str__(self):
-        return f"{self.consent} ({self.state})"
+        return f"{self.consent} ({self.status})"
 
     @property
     def timestamp(self) -> float:
-        return self.updated_at.timestamp()
+        return self.last_updated_at.timestamp()

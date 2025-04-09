@@ -1,36 +1,43 @@
 from django.db.models import Q
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
+from rest_framework.viewsets import GenericViewSet
+from rest_framework.mixins import (
+    ListModelMixin,
+    RetrieveModelMixin,
+    CreateModelMixin,
+    UpdateModelMixin,
+)
 
-from consents.models import Asset, Consent
+from consents.models import Consent
 from consents.serializers import (
     CreateConsent,
-    DetailAsset,
+    DetailConsent,
     ListConsent,
-    ListConsentHistory,
     UpdateConsent,
 )
 
 
-class AssetsViewset(ReadOnlyModelViewSet):
-    queryset = Asset.objects.all()
-    serializer_class = DetailAsset
-    lookup_field = "did"
-
-
-class ConsentsViewset(ModelViewSet):
+class ConsentsViewset(
+    ListModelMixin,
+    RetrieveModelMixin,
+    CreateModelMixin,
+    UpdateModelMixin,
+    GenericViewSet,
+):
     queryset = Consent.objects.all()
     serializer_class = ListConsent
 
     def get_serializer_class(self):
-        if self.action == "create":
-            return CreateConsent
-
-        if self.action in ["update", "partial_update"]:
-            return UpdateConsent
-
-        return self.serializer_class
+        match self.action:
+            case "list":
+                return ListConsent
+            case "retrieve":
+                return DetailConsent
+            case "create":
+                return CreateConsent
+            case "update" | "partial_update":
+                return UpdateConsent
+            case _:
+                return self.serializer_class
 
     def get_queryset(self):
         query_params = self.request.query_params
@@ -48,11 +55,3 @@ class ConsentsViewset(ModelViewSet):
                 query |= Q(**{param: value})
 
         return self.queryset.filter(query).order_by("-created_at")
-
-    @action(detail=True, methods=["get"])
-    def history(self, *args, **kwargs):
-        consent = self.get_object()
-
-        history = consent.history.all().order_by("-updated_at")
-        serializer = ListConsentHistory(history, many=True)
-        return Response(serializer.data)

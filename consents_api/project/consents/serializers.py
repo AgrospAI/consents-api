@@ -10,49 +10,27 @@ from rest_framework.serializers import (
     ModelSerializer,
 )
 
-from consents.models import Asset, Consent, ConsentHistory
-from consents.validators import DidLengthValidator
+from assets.models import Asset
+from consents.models import Consent, Status
+from helpers.validators.DidLengthValidator import DidLengthValidator
 
 User = get_user_model()
-
-
-class ListAsset(HyperlinkedModelSerializer):
-    url = HyperlinkedIdentityField(view_name="assets-detail")
-
-    class Meta:
-        model = Asset
-        fields = ("url",)
-
-
-class DetailAsset(ModelSerializer):
-    owner = CharField(source="owner.address")
-
-    class Meta:
-        model = Asset
-        fields = (
-            "did",
-            "owner",
-        )
-
-
-class ListConsentHistory(ModelSerializer):
-    state = CharField(source="get_state_display")
-    updated_at = FloatField(source="timestamp")
-
-    class Meta:
-        model = ConsentHistory
-        fields = (
-            "state",
-            "updated_at",
-        )
 
 
 class ListConsent(HyperlinkedModelSerializer):
     url = HyperlinkedIdentityField(view_name="consents-detail")
 
-    dataset = DetailAsset()
-    algorithm = DetailAsset()
-    state = CharField(source="get_state_display")
+    dataset = HyperlinkedIdentityField(
+        view_name="assets-detail",
+        lookup_field="did",
+        source="dataset.did",
+    )
+    algorithm = HyperlinkedIdentityField(
+        view_name="assets-detail",
+        lookup_field="did",
+        source="algorithm.did",
+    )
+    status = CharField(source="get_status_display")
     created_at = FloatField(source="timestamp")
 
     class Meta:
@@ -60,7 +38,7 @@ class ListConsent(HyperlinkedModelSerializer):
         fields = (
             "id",
             "url",
-            "state",
+            "status",
             "reason",
             "dataset",
             "algorithm",
@@ -81,7 +59,9 @@ class CreateConsent(ModelSerializer):
         )
 
     def to_representation(self, instance):
-        representation = ListConsent(instance, context={"request": self.context.get("request")}).data
+        representation = ListConsent(
+            instance, context={"request": self.context.get("request")}
+        ).data
         return representation
 
     @transaction.atomic  # Ensure that the whole DB transaction is atomic. If any operation fails ROLLBACK.
@@ -154,22 +134,28 @@ class CreateConsent(ModelSerializer):
 
 
 class UpdateConsent(ModelSerializer):
-    state = ChoiceField(
-        choices=Consent.States.choices,
-        source="get_state_display",
+    status = ChoiceField(
+        choices=Status.choices,
+        source="get_status_display",
     )
 
     class Meta:
         model = Consent
-        fields = ("state",)
+        fields = ("status",)
 
     def update(self, instance, validated_data):
         # Create a new ConsentHistory instance with the changes
-        ConsentHistory.objects.create(
-            consent=instance,
-            state=validated_data["state"],
-        )
+        # ConsentHistory.objects.create(
+        #     consent=instance,
+        #     status=validated_data["status"],
+        # )
 
-        print(f"Consent {instance.id} updated to {validated_data['state']}")
+        print(f"Consent {instance.id} updated to {validated_data['status']}")
 
         return super().update(instance, validated_data)
+
+
+class DetailConsent(ModelSerializer):
+    class Meta:
+        model = Consent
+        fields = "__all__"
