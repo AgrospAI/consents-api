@@ -3,8 +3,6 @@ from bitfield import BitField
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import constraints
-from helpers.validators.DidLengthValidator import DidLengthValidator
-
 from django.utils.translation import gettext_lazy as _
 
 User = get_user_model()
@@ -19,10 +17,10 @@ class Status(models.TextChoices):
 
 class RequestFlags:
     flags = (
-        ("trusted_algorithm_publisher", _("Trusted algorithm publisher")),
-        ("trusted_algorithm", _("Trusted algorithm")),
-        ("trusted_credential_address", _("Trusted credential address")),
-        ("allow_network_access", _("Allow network access")),
+        ("trusted_algorithm_publisher", _("Trusted Algorithm Publisher")),
+        ("trusted_algorithm", _("Trusted Algorithm")),
+        ("trusted_credential_address", _("Trusted Credential Address")),
+        ("allow_network_access", _("Allow Network Access")),
     )
 
 
@@ -57,14 +55,12 @@ class Consent(models.Model):
         Asset,
         on_delete=models.CASCADE,
         related_name="incoming_consents",
-        validators=[DidLengthValidator()],
     )
 
     algorithm = models.ForeignKey(
         Asset,
         on_delete=models.CASCADE,
         related_name="outgoing_consents",
-        validators=[DidLengthValidator()],
     )
 
     solicitor = models.ForeignKey(

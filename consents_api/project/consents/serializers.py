@@ -1,6 +1,7 @@
 from assets.models import Asset
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from helpers.fields.BitField import BitFieldSerializer
 from helpers.models.utils import get_or_create
 from helpers.services.aquarius import aquarius
 from helpers.validators.DidLengthValidator import DidLengthValidator
@@ -34,7 +35,13 @@ class ListConsent(HyperlinkedModelSerializer):
         lookup_field="did",
         read_only=True,
     )
-    created_at = FloatField(source="timestamp")
+    solicitor = CharField(
+        source="solicitor.address",
+    )
+    request = BitFieldSerializer()
+    created_at = FloatField(
+        source="timestamp",
+    )
 
     class Meta:
         model = Consent
@@ -44,6 +51,8 @@ class ListConsent(HyperlinkedModelSerializer):
             "reason",
             "dataset",
             "algorithm",
+            "solicitor",
+            "request",
             "created_at",
         )
 
@@ -76,6 +85,7 @@ class DetailConsent(ModelSerializer):
 class CreateConsent(ModelSerializer):
     dataset = CharField(validators=[DidLengthValidator()])
     algorithm = CharField(validators=[DidLengthValidator()])
+    request = BitFieldSerializer()
 
     class Meta:
         model = Consent
@@ -84,6 +94,7 @@ class CreateConsent(ModelSerializer):
             "dataset",
             "algorithm",
             "solicitor",
+            "request",
         )
 
     def to_representation(self, instance):
@@ -170,7 +181,7 @@ class UpdateConsent(ModelSerializer):
         source="get_status_display",
     )
 
-    permitted = BooleanField(default=False)
+    permitted = BitFieldSerializer(source="request")
 
     class Meta:
         model = Consent

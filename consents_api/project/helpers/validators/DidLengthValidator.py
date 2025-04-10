@@ -7,7 +7,7 @@ class DidLengthValidator:
         self.max_length = max_length
 
     def __call__(self, value: int) -> None:
-        if not self.min_length <= len(value) <= self.max_length:
+        if not self.min_length <= len(str(value)) <= self.max_length:
             raise ValidationError(
                 f"DID must be [{self.min_length}, {self.max_length}] characters long"
             )
