@@ -44,6 +44,7 @@ services:
       API_DB_NAME: consents
       ADMIN_USERNAME: ${ADMIN_USERNAME}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      ADMIN_ADDRESS: ${ADMIN_ADDRESS}
     depends_on:
       db:
         condition: service_healthy

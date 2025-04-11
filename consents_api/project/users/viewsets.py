@@ -16,8 +16,15 @@ class UsersViewset(
     viewsets.GenericViewSet,
 ):
     queryset = models.ConsentsUser.objects.all()
-    serializer_class = serializers.UserSerializer
+    serializer_class = serializers.ListUserSerializer
     lookup_field = "address"
+    lookup_url_kwarg = "address"
+
+    def get_serializer_class(self):
+        match self.action:
+            case "retrieve":
+                return serializers.DetailUserSerializer
+        return serializers.ListUserSerializer
 
     @action(detail=True, methods=["get"])
     def incoming(self, *args, **kwargs):

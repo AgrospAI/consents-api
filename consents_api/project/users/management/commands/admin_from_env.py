@@ -23,6 +23,7 @@ class Command(BaseCommand):
             admin = User.objects.create_superuser(
                 username=env("ADMIN_USERNAME"),
                 password=env("ADMIN_PASSWORD"),
+                address=env("ADMIN_ADDRESS"),
             )
             admin.save()
             self.stdout.write("OK")

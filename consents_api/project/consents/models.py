@@ -74,7 +74,7 @@ class Consent(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.solicitor} -> {self.dataset} & {self.algorithm} ({self.get_status_display})"
+        return f"{self.solicitor} -> {self.dataset} & {self.algorithm} ({self.status})"
 
     @property
     def timestamp(self) -> float:
@@ -84,11 +84,7 @@ class Consent(models.Model):
     def status(self) -> Status:
         query = ConsentResponse.objects.filter(consent=self)
 
-        return query.first().status if query.exists() else Status.PENDING
-
-    @property
-    def get_status_display(self) -> str:
-        return self.status.label
+        return str(query.first().status) if query.exists() else Status.PENDING
 
 
 class ConsentResponse(models.Model):
@@ -109,9 +105,9 @@ class ConsentResponse(models.Model):
 
     permitted = BitField(flags=RequestFlags.flags)
 
-    last_updated_at = models.DateTimeField(auto_now_add=True)
-
     reason = models.TextField()
+
+    last_updated_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.consent} ({self.status})"

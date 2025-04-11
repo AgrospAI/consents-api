@@ -6,7 +6,6 @@ from helpers.models.utils import get_or_create
 from helpers.services.aquarius import aquarius
 from helpers.validators.DidLengthValidator import DidLengthValidator
 from rest_framework.serializers import (
-    BooleanField,
     CharField,
     ChoiceField,
     FloatField,
@@ -15,7 +14,10 @@ from rest_framework.serializers import (
     HyperlinkedRelatedField,
     ModelSerializer,
 )
-from users.serializers import UserSerializer
+
+from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
+from rest_framework_nested.relations import NestedHyperlinkedRelatedField
+from users.serializers import ListUserSerializer
 
 from consents.models import Consent, ConsentResponse, Status
 
@@ -38,22 +40,15 @@ class ListConsent(HyperlinkedModelSerializer):
     solicitor = CharField(
         source="solicitor.address",
     )
-    request = BitFieldSerializer()
-    created_at = FloatField(
-        source="timestamp",
-    )
 
     class Meta:
         model = Consent
         fields = (
-            "id",
             "url",
             "reason",
             "dataset",
             "algorithm",
             "solicitor",
-            "request",
-            "created_at",
         )
 
 
@@ -68,8 +63,16 @@ class DetailConsent(ModelSerializer):
         lookup_field="did",
         read_only=True,
     )
-    solicitor = UserSerializer()
+    solicitor = ListUserSerializer()
     created_at = FloatField(source="timestamp")
+    request = BitFieldSerializer()
+    response = NestedHyperlinkedRelatedField(
+        view_name="consent-responses-detail",
+        parent_lookup_kwargs={
+            "consent_pk": "pk",
+        },
+        read_only=True,
+    )
 
     class Meta:
         model = Consent
@@ -79,6 +82,8 @@ class DetailConsent(ModelSerializer):
             "dataset",
             "algorithm",
             "solicitor",
+            "request",
+            "response",
         )
 
 
@@ -112,6 +117,7 @@ class CreateConsent(ModelSerializer):
 
         dataset_did = validated_data.pop("dataset")
         algorithm_did = validated_data.pop("algorithm")
+        solicitor = validated_data.pop("solicitor")
 
         # Retrieve dataset owner and algorithm owner from the blockchain
         data_owner_address = aquarius.get_asset_owner(dataset_did)
@@ -130,8 +136,8 @@ class CreateConsent(ModelSerializer):
         )
         solicitor_instance = get_or_create(
             User,
-            {"address": self.context["request"].user.address},
-            {"address": self.context["request"].user.address},
+            {"address": solicitor},
+            {"address": solicitor, "username": f"user_{solicitor}"},
         )
 
         data_instance = get_or_create(
@@ -155,7 +161,6 @@ class CreateConsent(ModelSerializer):
         )
 
         # TODO: Before creating the consent, check if the permissions asked for already exist
-
         # Get/Create the consent instance
         consent_instance = get_or_create(
             Consent,
@@ -175,31 +180,49 @@ class CreateConsent(ModelSerializer):
         return consent_instance
 
 
-class UpdateConsent(ModelSerializer):
-    status = ChoiceField(
-        choices=Status.choices,
-        source="get_status_display",
+class DetailConsentResponse(ModelSerializer):
+    consent = HyperlinkedRelatedField(
+        view_name="consents-detail",
+        lookup_field="pk",
+        read_only=True,
     )
 
-    permitted = BitFieldSerializer(source="request")
+    status = CharField(source="get_status_display")
+
+    permitted = BitFieldSerializer()
+
+    last_updated_at = FloatField(source="timestamp")
 
     class Meta:
-        model = Consent
+        model = ConsentResponse
+        fields = (
+            "consent",
+            "status",
+            "reason",
+            "permitted",
+            "last_updated_at",
+        )
+
+
+class CreateConsentResponse(NestedHyperlinkedModelSerializer):
+    status = ChoiceField(choices=Status.choices)
+
+    permitted = BitFieldSerializer()
+
+    reason = CharField(
+        required=False,
+        allow_blank=True,
+    )
+
+    class Meta:
+        model = ConsentResponse
         fields = (
             "status",
             "reason",
             "permitted",
         )
 
-    def update(self, instance, validated_data):
-        assert not instance.response, "Consent already has been response"
-
-        ConsentResponse.objects.create(
-            consent=instance,
-            status=validated_data["status"],
-            reason=validated_data["reason"],
-        )
-
-        print(f"Consent {instance.id} updated to {validated_data['status']}")
-
-        return super().update(instance, validated_data)
+    def save(self, *args, **kwargs):
+        consent_pk = self.context["view"].kwargs["consent_pk"]
+        kwargs["consent"] = Consent.objects.get(pk=consent_pk)
+        return super().save(*args, **kwargs)

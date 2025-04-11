@@ -6,6 +6,16 @@ from helpers.validators.DidLengthValidator import DidLengthValidator
 User = get_user_model()
 
 
+class AssetManager(models.Manager):
+    def get_pending_consents(self, asset) -> int:
+        match asset.type:
+            case Asset.Types.DATASET:
+                return Asset.objects.get(id=asset.id).incoming_consents.count()
+            case Asset.Types.ALGORITHM:
+                return Asset.objects.get(id=asset.id).outgoing_consents.count()
+        return -1
+
+
 class Asset(models.Model):
     class Types(models.TextChoices):
         DATASET = "D", _("Dataset")
@@ -32,6 +42,8 @@ class Asset(models.Model):
         choices=Types.choices,
         default=Types.DATASET,
     )
+
+    objects = AssetManager()
 
     def __str__(self):
         return self.did
