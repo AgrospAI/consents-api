@@ -79,6 +79,7 @@ class DetailConsent(ModelSerializer):
             "dataset",
             "algorithm",
             "solicitor",
+            "reason",
             "request",
             "response",
         )
