@@ -20,9 +20,9 @@ responses_router = NestedSimpleRouter(
 )
 
 responses_router.register(
-    r"responses",
+    r"response",
     ConsentResponseViewset,
-    "consent-responses",
+    "consent-response",
 )
 
 urlpatterns = [

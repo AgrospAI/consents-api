@@ -4,6 +4,7 @@ from django.db import transaction
 from helpers.fields.BitField import BitFieldSerializer
 from helpers.models.utils import get_or_create
 from helpers.services.aquarius import aquarius
+from helpers.validators.BitFieldMarked import BitFieldMarked
 from helpers.validators.DidLengthValidator import DidLengthValidator
 from rest_framework.serializers import (
     CharField,
@@ -14,9 +15,8 @@ from rest_framework.serializers import (
     HyperlinkedRelatedField,
     ModelSerializer,
 )
-
-from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
 from rest_framework_nested.relations import NestedHyperlinkedRelatedField
+from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
 from users.serializers import ListUserSerializer
 
 from consents.models import Consent, ConsentResponse, Status
@@ -67,7 +67,7 @@ class DetailConsent(ModelSerializer):
     created_at = FloatField(source="timestamp")
     request = BitFieldSerializer()
     response = NestedHyperlinkedRelatedField(
-        view_name="consent-responses-detail",
+        view_name="consent-response-detail",
         parent_lookup_kwargs={
             "consent_pk": "pk",
         },
@@ -205,6 +205,8 @@ class DetailConsentResponse(ModelSerializer):
 
 
 class CreateConsentResponse(NestedHyperlinkedModelSerializer):
+    # TODO: Only allow the owner to create a response
+
     status = ChoiceField(choices=Status.choices)
 
     permitted = BitFieldSerializer()
@@ -226,3 +228,18 @@ class CreateConsentResponse(NestedHyperlinkedModelSerializer):
         consent_pk = self.context["view"].kwargs["consent_pk"]
         kwargs["consent"] = Consent.objects.get(pk=consent_pk)
         return super().save(*args, **kwargs)
+
+    def create(self, validated_data):
+        # Get the consent instance from the context
+        consent_pk = self.context["view"].kwargs["consent_pk"]
+        consent_instance = Consent.objects.get(pk=consent_pk)
+
+        # Check if the consent already has been responded to
+        assert consent_instance.response is None, (
+            "Consent already has been responded to"
+        )
+
+        # Validate that the permitted field response has been requested
+        BitFieldMarked(consent_instance.request)(validated_data["permitted"])
+
+        return super().create(validated_data)
