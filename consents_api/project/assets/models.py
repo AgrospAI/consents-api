@@ -15,6 +15,20 @@ class AssetManager(models.Manager):
                 return Asset.objects.get(id=asset.id).outgoing_consents.count()
         return -1
 
+    def get_or_create(self, did: str, type: str) -> "Asset":
+        asset = self.filter(did=did)
+        if asset.exists():
+            asset = asset.first()
+            if asset.type != type:
+                raise ValueError(
+                    f"Asset with DID {did} already exists with type {asset.type}, expected {type}."
+                )
+            return asset
+
+        # Create the owner instance
+        owner = User.helper.get_or_create_from_aquarius(did)
+        return self.create(did=did, owner=owner, type=type)
+
 
 class Asset(models.Model):
     class Types(models.TextChoices):
@@ -43,7 +57,8 @@ class Asset(models.Model):
         default=Types.DATASET,
     )
 
-    objects = AssetManager()
+    objects = models.Manager()
+    helper = AssetManager()
 
     def __str__(self):
         return self.did

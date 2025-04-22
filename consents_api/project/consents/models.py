@@ -35,6 +35,60 @@ class PendingConsentsManager(models.Manager):
         return self.pending().filter(algorithm__owner=owner)
 
 
+class HelperConsentsManager(models.Manager):
+    def get_or_create(
+        self,
+        dataset: Asset,
+        algorithm: Asset,
+        solicitor_address: str,
+        **kwargs,
+    ) -> "Consent":
+        consent = self.filter(
+            dataset=dataset,
+            algorithm=algorithm,
+            solicitor__address=solicitor_address,
+        )
+
+        if consent.exists():
+            return consent.first()
+
+        solicitor = User.helper.get_or_create(solicitor_address)
+        return self.create(
+            dataset=dataset,
+            algorithm=algorithm,
+            solicitor=solicitor,
+            **kwargs,
+        )
+
+    def get_or_create_from_aquarius(
+        self,
+        dataset: str,
+        algorithm: str,
+        solicitor: str,
+        **kwargs,
+    ) -> "Consent":
+        # May have multiple request for same algorithm-dataset pair ????
+        consent = self.filter(
+            dataset__did=dataset,
+            algorithm__did=algorithm,
+            solicitor__address=solicitor,
+        )
+
+        if consent.exists():
+            return consent.first()
+
+        dataset = Asset.helper.get_or_create(dataset, Asset.Types.DATASET)
+        algorithm = Asset.helper.get_or_create(algorithm, Asset.Types.ALGORITHM)
+        solicitor_instance = User.helper.get_or_create(solicitor)
+
+        return self.create(
+            dataset=dataset,
+            algorithm=algorithm,
+            solicitor=solicitor_instance,
+            **kwargs,
+        )
+
+
 class Consent(models.Model):
     class Meta:
         db_table = "consent"
@@ -46,8 +100,11 @@ class Consent(models.Model):
             )
         ]
 
+    # === Managers ===
     objects = models.Manager()
     pending = PendingConsentsManager()
+    helper = HelperConsentsManager()
+    # ================
 
     reason = models.TextField()
 

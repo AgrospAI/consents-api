@@ -39,4 +39,4 @@ class DetailAsset(ModelSerializer):
         )
 
     def get_pending_consents(self, obj):
-        return Asset.objects.get_pending_consents(obj)
+        return Asset.helper.get_pending_consents(obj)
