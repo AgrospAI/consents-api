@@ -54,7 +54,7 @@ services:
   tester:
     build: .
     restart: "no"
-    command: bash -c "python manage.py test"
+    command: bash -c "python manage.py test -v 2"
     environment:
       API_DB_HOST: db
       API_DB_PORT: 5432

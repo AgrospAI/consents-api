@@ -29,12 +29,15 @@ class AquariusService:
         return res.json().get("nft").get("owner")
 
 
+@dataclass(frozen=True)
 class MockAquariusService:
     """Mock class for AquariusService to be used in tests."""
 
+    mock_address: str = "0x1234567890abcdef1234567890abcdef12345678"
+
     def get_asset_owner(self, asset_did: str) -> str:
         """Returns a mock asset owner address."""
-        return "0x1234567890abcdef1234567890abcdef12345678"
+        return self.mock_address
 
 
 aquarius = AquariusService() if not settings.TESTING else MockAquariusService()

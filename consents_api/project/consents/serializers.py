@@ -89,6 +89,7 @@ class CreateConsent(ModelSerializer):
     dataset = CharField(validators=[DidLengthValidator()])
     algorithm = CharField(validators=[DidLengthValidator()])
     request = BitFieldSerializer()
+    solicitor = CharField()
 
     class Meta:
         model = Consent
@@ -174,7 +175,7 @@ class CreateConsentResponse(NestedHyperlinkedModelSerializer):
         consent_instance = Consent.objects.get(pk=consent_pk)
 
         # Check if the consent already has been responded to
-        assert consent_instance.response is None, (
+        assert not hasattr(consent_instance, "response"), (
             "Consent already has been responded to"
         )
 
