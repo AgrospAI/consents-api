@@ -32,7 +32,7 @@ class ConsentTest(APITestCase):
             format="json",
         )
 
-        if response.status_coode != status.HTTP_201_CREATED:
+        if response.status_code != status.HTTP_201_CREATED:
             print("Failed to create consent:", response.data)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
