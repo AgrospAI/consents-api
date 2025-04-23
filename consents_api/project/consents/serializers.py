@@ -6,10 +6,10 @@ from helpers.validators.DidLengthValidator import DidLengthValidator
 from rest_framework.serializers import (
     CharField,
     ChoiceField,
-    FloatField,
     HyperlinkedIdentityField,
     HyperlinkedModelSerializer,
     HyperlinkedRelatedField,
+    IntegerField,
     ModelSerializer,
 )
 from rest_framework_nested.relations import NestedHyperlinkedRelatedField
@@ -61,7 +61,7 @@ class DetailConsent(ModelSerializer):
         read_only=True,
     )
     solicitor = ListUserSerializer()
-    created_at = FloatField(source="timestamp")
+    created_at = IntegerField(source="timestamp")
     request = BitFieldSerializer()
     response = NestedHyperlinkedRelatedField(
         view_name="consent-response-detail",
@@ -131,7 +131,7 @@ class DetailConsentResponse(ModelSerializer):
 
     permitted = BitFieldSerializer()
 
-    last_updated_at = FloatField(source="timestamp")
+    last_updated_at = IntegerField(source="timestamp")
 
     class Meta:
         model = ConsentResponse
