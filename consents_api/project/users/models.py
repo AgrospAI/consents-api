@@ -1,9 +1,9 @@
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
 from helpers.services.aquarius import aquarius
 
 
-class ConsentsUserManager(models.Manager):
+class ConsentsUserManager(UserManager):
     def get_or_create(self, address: str) -> "ConsentsUser":
         user = self.filter(address=address)
         if user.exists():
@@ -22,5 +22,5 @@ class ConsentsUser(AbstractUser):
 
     address = models.CharField(max_length=80, unique=True)
 
-    objects = models.Manager()
+    objects = UserManager()
     helper = ConsentsUserManager()
