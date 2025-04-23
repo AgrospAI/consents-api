@@ -80,6 +80,16 @@ class ConsentTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertContains(response, c.reason)
 
+    def test_consent_user_has_pending(self):
+        _ = self.create_consent()
+
+        url = reverse("users-detail", args=[aquarius.mock_address])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["incoming_pending_consents"], 1)
+        self.assertEqual(response.data["outgoing_pending_consents"], 1)
+
     def test_consent_response(self):
         c = self.create_consent(request="3")
 

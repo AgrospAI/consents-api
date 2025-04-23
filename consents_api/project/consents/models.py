@@ -26,7 +26,7 @@ class RequestFlags:
 
 class PendingConsentsManager(models.Manager):
     def pending(self):
-        return super().get_queryset().filter(response__isnull=False)
+        return super().get_queryset().filter(response__isnull=True)
 
     def from_dataset_owner(self, owner):
         return self.pending().filter(dataset__owner=owner)
