@@ -5,7 +5,6 @@ from helpers.validators.BitFieldMarked import BitFieldMarked
 from helpers.validators.DidLengthValidator import DidLengthValidator
 from rest_framework.serializers import (
     CharField,
-    ChoiceField,
     HyperlinkedIdentityField,
     HyperlinkedModelSerializer,
     HyperlinkedRelatedField,
@@ -38,6 +37,7 @@ class ListConsent(HyperlinkedModelSerializer):
         source="solicitor.address",
     )
     created_at = IntegerField(source="timestamp")
+    response_status = CharField(source="response.get_status_display")
 
     class Meta:
         model = Consent
@@ -47,6 +47,7 @@ class ListConsent(HyperlinkedModelSerializer):
             "dataset",
             "algorithm",
             "solicitor",
+            "response_status",
             "created_at",
         )
 
@@ -112,8 +113,7 @@ class CreateConsent(ModelSerializer):
 
     @transaction.atomic  # Ensure that the whole DB transaction is atomic. If any operation fails ROLLBACK.
     def create(self, validated_data):
-        # TODO: Before creating the consent, check if the permissions asked for is already granted
-        # in aquarius.
+        # TODO: Before creating the consent, check if the permissions asked for is already granted in aquarius.
         return Consent.helper.get_or_create_from_aquarius(
             dataset=validated_data.pop("dataset"),
             algorithm=validated_data.pop("algorithm"),
@@ -133,6 +133,8 @@ class DetailConsentResponse(ModelSerializer):
 
     permitted = BitFieldSerializer()
 
+    status = CharField(source="get_status_display")
+
     last_updated_at = IntegerField(source="timestamp")
 
     class Meta:
@@ -142,14 +144,13 @@ class DetailConsentResponse(ModelSerializer):
             "status",
             "reason",
             "permitted",
+            "status",
             "last_updated_at",
         )
 
 
 class CreateConsentResponse(NestedHyperlinkedModelSerializer):
     # TODO: Only allow the asset owner to create a response
-
-    status = ChoiceField(choices=Status.choices)
 
     permitted = BitFieldSerializer()
 
@@ -161,7 +162,6 @@ class CreateConsentResponse(NestedHyperlinkedModelSerializer):
     class Meta:
         model = ConsentResponse
         fields = (
-            "status",
             "reason",
             "permitted",
         )
@@ -183,5 +183,10 @@ class CreateConsentResponse(NestedHyperlinkedModelSerializer):
 
         # Validate that the permitted field response has been requested
         BitFieldMarked(consent_instance.request)(validated_data["permitted"])
+
+        validated_data["status"] = Status.from_bitfields(
+            int(consent_instance.request),
+            int(validated_data["permitted"]),
+        )
 
         return super().create(validated_data)

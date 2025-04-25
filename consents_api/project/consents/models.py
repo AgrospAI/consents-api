@@ -14,6 +14,15 @@ class Status(models.TextChoices):
     DENIED = "D", _("Denied")
     RESOLVED = "R", _("Resolved")
 
+    @staticmethod
+    def from_bitfields(original: int, permitted: int) -> "Status":
+        if original == permitted:
+            return Status.ACCEPTED
+        elif permitted == 0:
+            return Status.DENIED
+        else:
+            return Status.RESOLVED
+
 
 class RequestFlags:
     flags = (
@@ -155,14 +164,14 @@ class ConsentResponse(models.Model):
         related_name="response",
     )
 
+    permitted = BitField(flags=RequestFlags.flags)
+
+    reason = models.TextField()
+
     status = models.CharField(
         max_length=1,
         choices=Status.choices,
     )
-
-    permitted = BitField(flags=RequestFlags.flags)
-
-    reason = models.TextField()
 
     last_updated_at = models.DateTimeField(auto_now_add=True)
 
