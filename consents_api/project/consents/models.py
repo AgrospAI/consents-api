@@ -33,17 +33,6 @@ class RequestFlags:
     )
 
 
-class PendingConsentsManager(models.Manager):
-    def pending(self):
-        return super().get_queryset().filter(response__isnull=True)
-
-    def from_dataset_owner(self, owner):
-        return self.pending().filter(dataset__owner=owner)
-
-    def from_algorithm_owner(self, owner: str):
-        return self.pending().filter(algorithm__owner=owner)
-
-
 class HelperConsentsManager(models.Manager):
     def get_or_create(
         self,
@@ -97,6 +86,17 @@ class HelperConsentsManager(models.Manager):
             **kwargs,
         )
 
+    def pending(self):
+        return super().get_queryset().filter(response__isnull=True)
+
+    def from_dataset_owner(self, owner: str, pending_only=False):
+        queryset = self.pending() if pending_only else self.all()
+        return queryset.filter(dataset__owner=owner)
+
+    def from_algorithm_owner(self, owner: str, pending_only=False):
+        queryset = self.pending() if pending_only else self.all()
+        return queryset.filter(algorithm__owner=owner)
+
 
 class Consent(models.Model):
     class Meta:
@@ -111,7 +111,6 @@ class Consent(models.Model):
 
     # === Managers ===
     objects = models.Manager()
-    pending = PendingConsentsManager()
     helper = HelperConsentsManager()
     # ================
 

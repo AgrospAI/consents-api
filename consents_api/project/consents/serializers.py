@@ -37,7 +37,7 @@ class ListConsent(HyperlinkedModelSerializer):
         source="solicitor.address",
     )
     created_at = IntegerField(source="timestamp")
-    response_status = CharField(source="response.get_status_display")
+    status = CharField(source="response.get_status_display")
 
     class Meta:
         model = Consent
@@ -47,7 +47,7 @@ class ListConsent(HyperlinkedModelSerializer):
             "dataset",
             "algorithm",
             "solicitor",
-            "response_status",
+            "status",
             "created_at",
         )
 

@@ -41,7 +41,7 @@ class DetailUserSerializer(serializers.ModelSerializer):
 
     # Retrieve incoming/pending consents according to the user ownership of the asset
     def get_incoming_pending_consents(self, obj):
-        return Consent.pending.from_dataset_owner(obj).count()
+        return Consent.helper.from_dataset_owner(obj, pending_only=True).count()
 
     def get_outgoing_pending_consents(self, obj):
-        return Consent.pending.from_algorithm_owner(obj).count()
+        return Consent.helper.from_algorithm_owner(obj, pending_only=True).count()
