@@ -1,6 +1,7 @@
 from assets.models import Asset
 from bitfield import BitField
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import constraints
 from django.utils.translation import gettext_lazy as _
@@ -96,6 +97,14 @@ class HelperConsentsManager(models.Manager):
     def from_algorithm_owner(self, owner: str, pending_only=False):
         queryset = self.pending() if pending_only else self.all()
         return queryset.filter(algorithm__owner=owner)
+
+    def from_solicitor_address(self, solicitor: str, pending_only=False):
+        queryset = self.pending() if pending_only else self.all()
+        return queryset.filter(solicitor__address=solicitor)
+
+    def from_solicitor(self, solicitor: AbstractUser, pending_only=False):
+        queryset = self.pending() if pending_only else self.all()
+        return queryset.filter(solicitor=solicitor)
 
 
 class Consent(models.Model):
