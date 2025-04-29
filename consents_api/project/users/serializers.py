@@ -25,10 +25,17 @@ class DetailUserSerializer(serializers.ModelSerializer):
     incoming_pending_consents = serializers.SerializerMethodField()
     outgoing_pending_consents = serializers.SerializerMethodField()
     solicited_pending_consents = serializers.SerializerMethodField()
+    pending_solicited = serializers.HyperlinkedIdentityField(
+        view_name="consents-detail",
+        lookup_field="address",
+        many=True,
+        read_only=True,
+    )
     assets = serializers.HyperlinkedIdentityField(
         view_name="assets-detail",
         lookup_field="did",
         many=True,
+        read_only=True,
     )
 
     class Meta:
@@ -36,6 +43,7 @@ class DetailUserSerializer(serializers.ModelSerializer):
         fields = (
             "address",
             "assets",
+            "pending_solicited",
             "incoming_pending_consents",
             "outgoing_pending_consents",
             "solicited_pending_consents",

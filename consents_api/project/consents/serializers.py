@@ -36,6 +36,7 @@ class ListConsent(HyperlinkedModelSerializer):
     solicitor = CharField(
         source="solicitor.address",
     )
+    request = BitFieldSerializer()
     created_at = IntegerField(source="timestamp")
     status = CharField(source="response.get_status_display")
 
@@ -47,6 +48,7 @@ class ListConsent(HyperlinkedModelSerializer):
             "dataset",
             "algorithm",
             "solicitor",
+            "request",
             "status",
             "created_at",
         )
