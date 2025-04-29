@@ -90,21 +90,62 @@ class ConsentTest(APITestCase):
         self.assertEqual(response.data["incoming_pending_consents"], 1)
         self.assertEqual(response.data["outgoing_pending_consents"], 1)
 
-    def test_consent_response(self):
+    def test_consent_response_accepted(self):
         c = self.create_consent(request="3")
 
         url = reverse("consent-response-list", args=[c.pk])
         response = self.client.post(
             url,
-            {"status": "A", "reason": "Test reason", "permitted": "3"},
+            {"reason": "Test reason", "permitted": "3"},
             format="json",
         )
-
-        print("Response:", response.data)
 
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
+        url = reverse("consents-detail", args=[c.pk])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIsNotNone(response.data)
-        self.assertEqual(c.reason, response.data["reason"])
-        self.assertEqual("A", response.data["status"])
+        self.assertEqual("Accepted", response.data["status"])
+
+    def test_consent_response_resolved(self):
+        c = self.create_consent(request="3")
+
+        url = reverse("consent-response-list", args=[c.pk])
+        response = self.client.post(
+            url,
+            {"reason": "Test reason", "permitted": "1"},
+            format="json",
+        )
+
+        self.assertIsNotNone(response)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        url = reverse("consents-detail", args=[c.pk])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNotNone(response.data)
+        self.assertEqual("Resolved", response.data["status"])
+
+    def test_consent_response_denied(self):
+        c = self.create_consent(request="3")
+
+        url = reverse("consent-response-list", args=[c.pk])
+        response = self.client.post(
+            url,
+            {"reason": "Test reason", "permitted": "0"},
+            format="json",
+        )
+
+        self.assertIsNotNone(response)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        url = reverse("consents-detail", args=[c.pk])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNotNone(response.data)
+        self.assertEqual("Denied", response.data["status"])

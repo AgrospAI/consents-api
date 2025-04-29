@@ -73,6 +73,7 @@ class DetailConsent(ModelSerializer):
         },
         read_only=True,
     )
+    status = CharField(source="response.get_status_display")
 
     class Meta:
         model = Consent
@@ -85,6 +86,7 @@ class DetailConsent(ModelSerializer):
             "reason",
             "request",
             "response",
+            "status",
         )
 
 
