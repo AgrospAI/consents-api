@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from helpers.bitfields import get_mask
 from helpers.fields.BitField import BitFieldSerializer
 from helpers.validators.BitFieldMarked import BitFieldMarked
 from helpers.validators.DidLengthValidator import DidLengthValidator
@@ -71,7 +72,7 @@ class DetailConsent(ModelSerializer):
     response = NestedHyperlinkedRelatedField(
         view_name="consent-response-detail",
         parent_lookup_kwargs={
-            "consent_pk": "pk",
+            "consent_pk": "consent__pk",
         },
         read_only=True,
     )
@@ -185,12 +186,15 @@ class CreateConsentResponse(NestedHyperlinkedModelSerializer):
             "Consent already has been responded to"
         )
 
-        # Validate that the permitted field response has been requested
-        BitFieldMarked(consent_instance.request)(validated_data["permitted"])
+        permitted_mask = get_mask(validated_data["permitted"])
 
+        # Validate that the permitted field response has been requested
+        BitFieldMarked(consent_instance.request)(permitted_mask)
+
+        validated_data["permitted"] = permitted_mask
         validated_data["status"] = Status.from_bitfields(
-            int(consent_instance.request),
-            int(validated_data["permitted"]),
+            get_mask(consent_instance.request),
+            get_mask(permitted_mask),
         )
 
         return super().create(validated_data)

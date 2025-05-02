@@ -1,3 +1,4 @@
+from helpers.bitfields import get_mask
 from django.forms import ValidationError
 
 
@@ -5,9 +6,11 @@ class BitFieldMarked:
     def __init__(self, template: int) -> None:
         self._template = int(template)
 
-    def __call__(self, value: int) -> None:
+    def __call__(self, value: int | str | dict) -> None:
+        value = get_mask(value)
+
         # Check if any of the value bits are not marked in the base template
-        if int(value) & ~self._template:
+        if value & ~self._template:
             raise ValidationError(
                 f"Given bitfield {value} has bits not marked in required {self._template}"
             )
