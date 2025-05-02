@@ -17,6 +17,9 @@ class Status(models.TextChoices):
 
     @staticmethod
     def from_bitfields(original: int, permitted: int) -> "Status":
+        original = int(original)
+        permitted = int(permitted)
+
         if original == permitted:
             return Status.ACCEPTED
         elif permitted == 0:
