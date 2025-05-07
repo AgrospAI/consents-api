@@ -5,6 +5,7 @@ from rest_framework.mixins import (
     CreateModelMixin,
     ListModelMixin,
     RetrieveModelMixin,
+    DestroyModelMixin,
 )
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import status
@@ -106,6 +107,7 @@ class ConsentsViewset(
 class ConsentResponseViewset(
     CreateModelMixin,
     RetrieveModelMixin,
+    DestroyModelMixin,
     GenericViewSet,
 ):
     queryset = ConsentResponse.objects.all()
@@ -123,5 +125,7 @@ class ConsentResponseViewset(
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
 
-        response_serializer = ListConsent(instance.consent, context={"request": request})
+        response_serializer = ListConsent(
+            instance.consent, context={"request": request}
+        )
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
