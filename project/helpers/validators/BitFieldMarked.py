@@ -1,5 +1,6 @@
-from helpers.bitfields import get_mask
+from consents.models import Consent
 from django.forms import ValidationError
+from helpers.bitfields import get_mask
 
 
 class BitFieldMarked:
@@ -7,7 +8,7 @@ class BitFieldMarked:
         self._template = int(template)
 
     def __call__(self, value: int | str | dict) -> None:
-        value = get_mask(value)
+        value = get_mask(value, Consent)
 
         # Check if any of the value bits are not marked in the base template
         if value & ~self._template:

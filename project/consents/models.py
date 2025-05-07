@@ -5,6 +5,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import constraints
 from django.utils.translation import gettext_lazy as _
+from helpers.bitfields import get_mask
 
 User = get_user_model()
 
@@ -83,10 +84,13 @@ class HelperConsentsManager(models.Manager):
         algorithm = Asset.helper.get_or_create(algorithm, Asset.Types.ALGORITHM)
         solicitor_instance = User.helper.get_or_create(solicitor)
 
+        request = get_mask(kwargs.pop("request"), Consent)
+
         return self.create(
             dataset=dataset,
             algorithm=algorithm,
             solicitor=solicitor_instance,
+            request=request,
             **kwargs,
         )
 

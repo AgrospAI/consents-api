@@ -186,15 +186,15 @@ class CreateConsentResponse(NestedHyperlinkedModelSerializer):
             "Consent already has been responded to"
         )
 
-        permitted_mask = get_mask(validated_data["permitted"])
+        permitted_mask = get_mask(validated_data["permitted"], Consent)
 
         # Validate that the permitted field response has been requested
         BitFieldMarked(consent_instance.request)(permitted_mask)
 
         validated_data["permitted"] = permitted_mask
         validated_data["status"] = Status.from_bitfields(
-            get_mask(consent_instance.request),
-            get_mask(permitted_mask),
+            get_mask(consent_instance.request, Consent),
+            get_mask(permitted_mask, Consent),
         )
 
         return super().create(validated_data)

@@ -1,9 +1,7 @@
 import json
 
-from consents.models import Consent
 
-
-def get_mask(value: int | str | dict, base_class=Consent) -> int:
+def get_mask(value: int | str | dict, base_class) -> int:
     if isinstance(value, dict):
         value = str(value)
 
