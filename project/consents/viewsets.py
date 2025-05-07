@@ -7,6 +7,7 @@ from rest_framework.mixins import (
     RetrieveModelMixin,
     DestroyModelMixin,
 )
+from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import status
 
@@ -81,6 +82,16 @@ class ConsentsViewset(
         # print(f"Consent {instance.id} updated to {validated_data['status']}")
 
         # return super().update(instance, validated_data)
+
+    @action(detail=True, methods=["delete"], url_path="delete-response")
+    def delete_response(self, *args, **kwargs):
+        instance = self.get_object()
+
+        query = ConsentResponse.objects.filter(consent=instance)
+        if query.exists():
+            query.first().delete()
+            return Response(status=status.HTTP_200_OK)
+        return Response("No response found", status=status.HTTP_404_NOT_FOUND)
 
     # @action(detail=True, methods=["post"])
     # def respond(self, *args, **kwargs):
