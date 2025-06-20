@@ -22,6 +22,7 @@ FROM python:3.13-slim-bookworm AS runner
 WORKDIR /app
 
 COPY --from=installer /env/.venv /.venv
+COPY ./project /app
 ENV PATH="/.venv/bin/:$PATH"
 
 ENV PYTHONDONTWRITEBYTECODE=1
