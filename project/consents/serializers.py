@@ -21,9 +21,35 @@ from consents.models import Consent, ConsentResponse, Status
 User = get_user_model()
 
 
+class DetailConsentResponse(ModelSerializer):
+    consent = HyperlinkedRelatedField(
+        view_name="consents-detail",
+        lookup_field="pk",
+        read_only=True,
+    )
+
+    status = CharField(source="get_status_display")
+
+    permitted = BitFieldSerializer()
+
+    status = CharField(source="get_status_display")
+
+    last_updated_at = IntegerField(source="timestamp")
+
+    class Meta:
+        model = ConsentResponse
+        fields = (
+            "consent",
+            "status",
+            "reason",
+            "permitted",
+            "status",
+            "last_updated_at",
+        )
+
+
 class ListConsent(HyperlinkedModelSerializer):
     url = HyperlinkedIdentityField(view_name="consents-detail")
-
     dataset = HyperlinkedRelatedField(
         view_name="assets-detail",
         lookup_field="did",
@@ -34,24 +60,32 @@ class ListConsent(HyperlinkedModelSerializer):
         lookup_field="did",
         read_only=True,
     )
-    solicitor = CharField(
-        source="solicitor.address",
-    )
-    request = BitFieldSerializer()
+    solicitor = ListUserSerializer()
     created_at = IntegerField(source="timestamp")
-    status = CharField(source="response.get_status_display")
+    request = BitFieldSerializer()
+    response = DetailConsentResponse()
+    # response = NestedHyperlinkedRelatedField(
+    #     view_name="consent-response-detail",
+    #     parent_lookup_kwargs={
+    #         "consent_pk": "consent__pk",
+    #     },
+    #     read_only=True,
+    # )
+    status = CharField()
 
     class Meta:
         model = Consent
         fields = (
             "url",
-            "reason",
+            "id",
+            "created_at",
             "dataset",
             "algorithm",
             "solicitor",
+            "reason",
             "request",
+            "response",
             "status",
-            "created_at",
         )
 
 
@@ -98,6 +132,7 @@ class CreateConsent(ModelSerializer):
     algorithm = CharField(validators=[DidLengthValidator()])
     request = BitFieldSerializer()
     solicitor = CharField()
+    reason = CharField(required=False)
 
     class Meta:
         model = Consent
@@ -124,33 +159,6 @@ class CreateConsent(ModelSerializer):
             algorithm=validated_data.pop("algorithm"),
             solicitor=validated_data.pop("solicitor"),
             **validated_data,
-        )
-
-
-class DetailConsentResponse(ModelSerializer):
-    consent = HyperlinkedRelatedField(
-        view_name="consents-detail",
-        lookup_field="pk",
-        read_only=True,
-    )
-
-    status = CharField(source="get_status_display")
-
-    permitted = BitFieldSerializer()
-
-    status = CharField(source="get_status_display")
-
-    last_updated_at = IntegerField(source="timestamp")
-
-    class Meta:
-        model = ConsentResponse
-        fields = (
-            "consent",
-            "status",
-            "reason",
-            "permitted",
-            "status",
-            "last_updated_at",
         )
 
 
@@ -182,9 +190,9 @@ class CreateConsentResponse(NestedHyperlinkedModelSerializer):
         consent_instance = Consent.objects.get(pk=consent_pk)
 
         # Check if the consent already has been responded to
-        assert not hasattr(consent_instance, "response"), (
-            "Consent already has been responded to"
-        )
+        assert not hasattr(
+            consent_instance, "response"
+        ), "Consent already has been responded to"
 
         permitted_mask = get_mask(validated_data["permitted"], Consent)
 

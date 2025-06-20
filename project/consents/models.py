@@ -130,7 +130,7 @@ class Consent(models.Model):
     helper = HelperConsentsManager()
     # ================
 
-    reason = models.TextField()
+    reason = models.TextField(blank=True)
 
     dataset = models.ForeignKey(
         Asset,
@@ -165,7 +165,11 @@ class Consent(models.Model):
     def status(self) -> Status:
         query = ConsentResponse.objects.filter(consent=self)
 
-        return str(query.first().status) if query.exists() else Status.PENDING
+        return (
+            query.first().get_status_display()
+            if query.exists()
+            else Status.PENDING.label
+        )
 
 
 class ConsentResponse(models.Model):
@@ -186,6 +190,8 @@ class ConsentResponse(models.Model):
     status = models.CharField(
         max_length=1,
         choices=Status.choices,
+        default=Status.PENDING,
+        null=False,
     )
 
     last_updated_at = models.DateTimeField(auto_now_add=True)
