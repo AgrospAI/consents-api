@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 import sys
+import dj_database_url
 from pathlib import Path
 
 import environ
@@ -89,14 +90,11 @@ WSGI_APPLICATION = "project.wsgi.application"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": env("API_DB_NAME"),
-        "USER": env("API_DB_USER"),
-        "PASSWORD": env("API_DB_PASS"),
-        "HOST": env("API_DB_HOST"),
-        "PORT": env("API_DB_PORT"),
-    },
+    "default": dj_database_url.config(
+        env="DATABASE_URI",
+        conn_max_age=600,
+        conn_health_checks=True,
+    ),
     "test": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",

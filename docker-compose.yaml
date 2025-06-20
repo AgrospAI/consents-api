@@ -21,11 +21,7 @@ services:
     ports:
       - "${CONSENTS_API_PORT}:8000"
     environment:
-      API_DB_HOST: db
-      API_DB_PORT: 5432
-      API_DB_USER: postgres
-      API_DB_PASS: example
-      API_DB_NAME: consents
+      DATABASE_URI: postgresql://postgres:example@db:5432/consents
     volumes:
       - ./project/:/app:cached
     depends_on:
@@ -37,11 +33,7 @@ services:
     restart: "no"
     command: bash -c " python manage.py makemigrations users assets consents && python manage.py migrate && python manage.py admin_from_env "
     environment:
-      API_DB_HOST: db
-      API_DB_PORT: 5432
-      API_DB_USER: postgres
-      API_DB_PASS: example
-      API_DB_NAME: consents
+      DATABASE_URI: postgresql://postgres:example@db:5432/consents
       ADMIN_USERNAME: ${ADMIN_USERNAME}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       ADMIN_ADDRESS: ${ADMIN_ADDRESS}
@@ -56,11 +48,7 @@ services:
     restart: "no"
     command: bash -c "python manage.py test -v 2"
     environment:
-      API_DB_HOST: db
-      API_DB_PORT: 5432
-      API_DB_USER: postgres
-      API_DB_PASS: example
-      API_DB_NAME: consents
+      DATABASE_URI: postgresql://postgres:example@db:5432/consents
     volumes:
       - ./project/:/app:ro
     depends_on:
