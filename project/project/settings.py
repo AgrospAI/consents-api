@@ -34,7 +34,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-CORS_ALLOWED_ORIGINS = ["http://localhost:8000"]
+CORS_ALLOWED_ORIGINS = [
+    "http://mvg-portal-consents-frontend.agrospai.cluster.local:3000",
+]
 
 
 # Application definition
