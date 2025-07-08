@@ -30,11 +30,15 @@ TESTING = "test" in sys.argv
 SECRET_KEY = "django-insecure-0l&fjj7y(-$gpo8jak$gyg)n)_90h*tfeai@h*2)^6wd=khk3d"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "mvg-portal-consents-frontend.agrospai.cluster.local",
+    "localhost",
+]
 
 CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8000",
     "http://mvg-portal-consents-frontend.agrospai.cluster.local:3000",
 ]
 
