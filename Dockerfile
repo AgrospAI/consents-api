@@ -12,7 +12,7 @@ RUN sh /uv-installer.sh && rm /uv-installer.sh
 # Ensure the installed binary is on the `PATH`
 ENV PATH="/root/.local/bin/:$PATH"
 
-WORKDIR /env
+WORKDIR /env/
 COPY pyproject.toml uv.lock /env/
 
 RUN uv venv .venv && uv sync
@@ -28,6 +28,13 @@ ENV PATH="/.venv/bin/:$PATH"
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-EXPOSE 8000
+# For some reason, you must run this locally because this doesn't generate the staticfiles correctly
+RUN python manage.py collectstatic --no-input
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+RUN groupadd -r djangouser && \
+    useradd -r -g djangouser -s /usr/sbin/nologin djangouser && \
+    chown -R djangouser:djangouser /app
+USER djangouser
+
+EXPOSE 8000
+CMD ["python", "-m", "gunicorn", "project.wsgi:application", "--bind", "0.0.0.0:8000"]

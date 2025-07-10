@@ -7,7 +7,7 @@ def main() -> None:
     Remove all migration directories from the project.
     """
 
-    base_project_path = Path("project/")
+    base_project_path = Path("../project")
 
     # Get all migration directories in the project
     migration_dirs = list(base_project_path.rglob("migrations"))

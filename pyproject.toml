@@ -13,7 +13,9 @@ dependencies = [
     "djangorestframework>=3.15.2",
     "drf-nested-routers>=0.94.1",
     "drf-yasg>=1.21.8",
+    "gunicorn>=23.0.0",
     "orjson>=3.10.16",
     "psycopg2-binary>=2.9.10",
     "requests>=2.32.3",
+    "whitenoise>=6.9.0",
 ]
