@@ -35,9 +35,7 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", default=get_random_secret_key())
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    "localhost",
-    "127.0.0.1",
-    "mvg-portal-consents-frontend.agrospai.cluster.local",
+    ".agrospai.svc.cluster.local",  # Allow all agrospai subdomains
 ]
 
 CORS_ALLOWED_ORIGINS = [
