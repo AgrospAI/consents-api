@@ -25,6 +25,7 @@ class ConsentsViewset(
     ListModelMixin,
     RetrieveModelMixin,
     CreateModelMixin,
+    DestroyModelMixin,
     GenericViewSet,
 ):
     queryset = Consent.objects.all()
