@@ -10,11 +10,13 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import os
 import sys
-import dj_database_url
 from pathlib import Path
 
+import dj_database_url
 import environ
+from django.core.management.utils import get_random_secret_key
 
 env = environ.Env()
 
@@ -26,15 +28,16 @@ TESTING = "test" in sys.argv
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-0l&fjj7y(-$gpo8jak$gyg)n)_90h*tfeai@h*2)^6wd=khk3d"
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", default=get_random_secret_key())
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
 ALLOWED_HOSTS = [
-    "mvg-portal-consents-frontend.agrospai.cluster.local",
     "localhost",
+    "127.0.0.1",
+    "mvg-portal-consents-frontend.agrospai.cluster.local",
 ]
 
 CORS_ALLOWED_ORIGINS = [
@@ -62,6 +65,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -88,6 +92,12 @@ TEMPLATES = [
         },
     },
 ]
+
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 WSGI_APPLICATION = "project.wsgi.application"
 
@@ -131,7 +141,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+STATIC_ROOT = f"{BASE_DIR}/staticfiles/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
