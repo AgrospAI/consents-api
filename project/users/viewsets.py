@@ -47,7 +47,9 @@ class UsersViewset(
                     user, pending_only=pending_only
                 )
 
-        serializer = ListConsent(consents, many=True, context={"request": self.request})
+        serializer = ListConsent(
+            consents, many=True, context={"request": self.request, "direction": way}
+        )
         return response.Response(serializer.data)
 
     @action(detail=True, methods=["get"], url_path="pending-incoming")

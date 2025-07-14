@@ -5,6 +5,7 @@ from helpers.fields.BitField import BitFieldSerializer
 from helpers.validators.BitFieldMarked import BitFieldMarked
 from helpers.validators.DidLengthValidator import DidLengthValidator
 from rest_framework.serializers import (
+    SerializerMethodField,
     CharField,
     HyperlinkedIdentityField,
     HyperlinkedModelSerializer,
@@ -72,6 +73,7 @@ class ListConsent(HyperlinkedModelSerializer):
     #     read_only=True,
     # )
     status = CharField()
+    direction = SerializerMethodField()
 
     class Meta:
         model = Consent
@@ -86,7 +88,13 @@ class ListConsent(HyperlinkedModelSerializer):
             "request",
             "response",
             "status",
+            "direction",
         )
+
+    def get_direction(self, obj) -> str:
+        if "direction" in self.context:
+            return str(self.context.get("direction")).capitalize()
+        return "-"
 
 
 class DetailConsent(ModelSerializer):
