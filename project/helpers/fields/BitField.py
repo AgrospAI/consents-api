@@ -6,9 +6,7 @@ from rest_framework import serializers
 
 class BitFieldSerializer(serializers.Field):
     def to_representation(self, value):
-        return orjson.dumps(
-            {flag: bool(val) for flag, val in value.items() if bool(val)}
-        ).decode("utf-8")
+        return {flag: bool(val) for flag, val in value.items() if bool(val)}
 
     def to_internal_value(self, data: int | dict):
         try:
