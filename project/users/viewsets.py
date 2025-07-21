@@ -29,7 +29,7 @@ class UsersViewset(
 
     def _actions(
         self,
-        way: Literal["incoming", "outgoing", "solicited"],
+        way: Literal["incoming", "outgoing"],
         pending_only: bool = False,
     ):
         user = self.get_object()
@@ -40,10 +40,6 @@ class UsersViewset(
                 )
             case "outgoing":
                 consents = Consent.helper.from_algorithm_owner(
-                    user, pending_only=pending_only
-                )
-            case "solicited":
-                consents = Consent.helper.from_solicitor(
                     user, pending_only=pending_only
                 )
 
@@ -60,10 +56,6 @@ class UsersViewset(
     def pending_outgoing(self, *args, **kwargs):
         return self._actions("outgoing", pending_only=True)
 
-    @action(detail=True, methods=["get"], url_path="pending-solicited")
-    def pending_solicited(self, *args, **kwargs):
-        return self._actions("solicited", pending_only=True)
-
     @action(detail=True, methods=["get"])
     def incoming(self, *args, **kwargs):
         return self._actions("incoming")
@@ -71,7 +63,3 @@ class UsersViewset(
     @action(detail=True, methods=["get"])
     def outgoing(self, *args, **kwargs):
         return self._actions("outgoing")
-
-    @action(detail=True, methods=["get"])
-    def solicited(self, *args, **kwargs):
-        return self._actions("solicited")

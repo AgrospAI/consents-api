@@ -24,13 +24,6 @@ class ListUserSerializer(serializers.HyperlinkedModelSerializer):
 class DetailUserSerializer(serializers.ModelSerializer):
     incoming_pending_consents = serializers.SerializerMethodField()
     outgoing_pending_consents = serializers.SerializerMethodField()
-    solicited_pending_consents = serializers.SerializerMethodField()
-    pending_solicited = serializers.HyperlinkedIdentityField(
-        view_name="consents-detail",
-        lookup_field="address",
-        many=True,
-        read_only=True,
-    )
     assets = serializers.HyperlinkedIdentityField(
         view_name="assets-detail",
         lookup_field="did",
@@ -43,10 +36,8 @@ class DetailUserSerializer(serializers.ModelSerializer):
         fields = (
             "address",
             "assets",
-            "pending_solicited",
             "incoming_pending_consents",
             "outgoing_pending_consents",
-            "solicited_pending_consents",
         )
 
     # Retrieve incoming/pending consents according to the user ownership of the asset
@@ -55,6 +46,3 @@ class DetailUserSerializer(serializers.ModelSerializer):
 
     def get_outgoing_pending_consents(self, obj):
         return Consent.helper.from_algorithm_owner(obj, pending_only=True).count()
-
-    def get_solicited_pending_consents(self, obj):
-        return Consent.helper.from_solicitor(obj, pending_only=True).count()

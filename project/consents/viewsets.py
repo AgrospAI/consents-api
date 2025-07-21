@@ -1,15 +1,15 @@
 from django.db import transaction
-from rest_framework.response import Response
 from django.db.models import Q
+from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.mixins import (
     CreateModelMixin,
+    DestroyModelMixin,
     ListModelMixin,
     RetrieveModelMixin,
-    DestroyModelMixin,
 )
-from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
-from rest_framework import status
 
 from consents.models import Consent, ConsentResponse
 from consents.serializers import (
@@ -58,32 +58,6 @@ class ConsentsViewset(
 
         return self.queryset.filter(query).order_by("-created_at")
 
-    def perform_create(self, serializer):
-        # Check if the consent already has been responded to
-
-        assert True
-        return super().perform_create(serializer)
-        # serializer
-
-        # try:
-        #     # Weird thing to do
-        #     instance.response
-        #     raise ValueError("Consent already has been responded to")
-        # # except Asset.RelatedObjectDoesNotExist:
-        # except Exception:
-        #     pass
-
-        # ConsentResponse.objects.create(
-        #     consent=instance,
-        #     status=validated_data["status"],
-        #     permitted=validated_data["permitted"],
-        #     reason=validated_data.get("reason", None),
-        # )
-
-        # print(f"Consent {instance.id} updated to {validated_data['status']}")
-
-        # return super().update(instance, validated_data)
-
     @action(detail=True, methods=["delete"], url_path="delete-response")
     def delete_response(self, *args, **kwargs):
         instance = self.get_object()
@@ -93,27 +67,6 @@ class ConsentsViewset(
             query.first().delete()
             return Response(status=status.HTTP_200_OK)
         return Response("No response found", status=status.HTTP_404_NOT_FOUND)
-
-    # @action(detail=True, methods=["post"])
-    # def respond(self, *args, **kwargs):
-    #     """
-    #     Respond to a consent request. This action is only available for the user that created the consent.
-    #     """
-
-    #     instance = self.get_object()
-
-    #     # Check if the consent already has been responded to
-    #     try:
-    #         instance.response
-    #         raise ValueError("Consent already has been responded to")
-    #     except Consent.RelatedObjectDoesNotExist:
-    #         pass
-
-    #     serializer = self.get_serializer(instance, data=self.request.data)
-    #     serializer.is_valid(raise_exception=True)
-    #     serializer.save()
-
-    #     return self.get_response(serializer.data)
 
 
 class ConsentResponseViewset(
