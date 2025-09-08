@@ -1,4 +1,3 @@
-from django.conf import settings
 from dataclasses import dataclass
 
 import requests
@@ -29,19 +28,6 @@ class AquariusService:
         return res.json().get("nft").get("owner")
 
 
-@dataclass(frozen=True)
-class MockAquariusService:
-    """Mock class for AquariusService to be used in tests."""
-
-    mock_address: str = "0x1234567890abcdef1234567890abcdef12345678"
-
-    def get_asset_owner(self, asset_did: str) -> str:
-        """Returns a mock asset owner address."""
-        return self.mock_address
-
-
-aquarius = AquariusService() if not settings.TESTING else MockAquariusService()
-
-print("Using AquariusService implementation: ", aquarius.__class__.__name__)
+aquarius = AquariusService()
 
 __all__ = ["aquarius"]

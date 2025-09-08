@@ -4,6 +4,7 @@ from helpers.bitfields import get_mask
 from helpers.fields.BitField import BitFieldSerializer
 from helpers.validators.BitFieldMarked import BitFieldMarked
 from helpers.validators.DidLengthValidator import DidLengthValidator
+from rest_framework import status
 from rest_framework.serializers import (
     SerializerMethodField,
     CharField,
@@ -15,6 +16,7 @@ from rest_framework.serializers import (
 )
 from rest_framework_nested.relations import NestedHyperlinkedRelatedField
 from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
+from rest_framework.exceptions import ValidationError
 from users.serializers import ListUserSerializer
 
 from consents.models import Consent, ConsentResponse, Status
@@ -139,7 +141,6 @@ class CreateConsent(ModelSerializer):
     dataset = CharField(validators=[DidLengthValidator()])
     algorithm = CharField(validators=[DidLengthValidator()])
     request = BitFieldSerializer()
-    solicitor = CharField()
     reason = CharField(required=False)
 
     class Meta:
@@ -148,7 +149,6 @@ class CreateConsent(ModelSerializer):
             "reason",
             "dataset",
             "algorithm",
-            "solicitor",
             "request",
         )
 
@@ -162,23 +162,18 @@ class CreateConsent(ModelSerializer):
     @transaction.atomic  # Ensure that the whole DB transaction is atomic. If any operation fails ROLLBACK.
     def create(self, validated_data):
         # TODO: Before creating the consent, check if the permissions asked for is already granted in aquarius.
+        solicitor = self.context["request"].user.address
         return Consent.helper.get_or_create_from_aquarius(
             dataset=validated_data.pop("dataset"),
             algorithm=validated_data.pop("algorithm"),
-            solicitor=validated_data.pop("solicitor"),
+            solicitor=solicitor,
             **validated_data,
         )
 
 
 class CreateConsentResponse(NestedHyperlinkedModelSerializer):
-    # TODO: Only allow the asset owner to create a response
-
     permitted = BitFieldSerializer()
-
-    reason = CharField(
-        required=False,
-        allow_blank=True,
-    )
+    reason = CharField(required=False, allow_blank=True)
 
     class Meta:
         model = ConsentResponse
@@ -197,10 +192,19 @@ class CreateConsentResponse(NestedHyperlinkedModelSerializer):
         consent_pk = self.context["view"].kwargs["consent_pk"]
         consent_instance = Consent.objects.get(pk=consent_pk)
 
+        request_address = self.context["request"].user.address
+        dataset_owner_address = consent_instance.dataset.owner.address
+        if str(request_address) != str(dataset_owner_address):
+            raise ValidationError(
+                f"Unauthorized: wallet {request_address} is not owner of dataset {dataset_owner_address}",
+                status.HTTP_403_FORBIDDEN,
+            )
+
         # Check if the consent already has been responded to
-        assert not hasattr(
-            consent_instance, "response"
-        ), "Consent already has been responded to"
+        if hasattr(consent_instance, "response"):
+            raise ValidationError(
+                "Consent already has been responded to", status.HTTP_400_BAD_REQUEST
+            )
 
         permitted_mask = get_mask(validated_data["permitted"], Consent)
 

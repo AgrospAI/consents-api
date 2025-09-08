@@ -2,7 +2,9 @@ from assets.models import Asset
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 from django.urls import reverse
-from helpers.services.aquarius import aquarius
+from eth_account import Account
+from eth_account.messages import encode_defunct
+from helpers.config import config
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -10,36 +12,81 @@ from consents.models import Consent
 
 User = get_user_model()
 
+wallet_address: str | None
+
 
 class ConsentTest(APITestCase):
+    def authenticate(self, private_key: str):
+        self.client.credentials()
+
+        # Random test account
+        account = Account.from_key(private_key)
+
+        global wallet_address
+        wallet_address = account.address
+
+        # 1. Get nonce
+        nonce_url = reverse("auth-nonce")
+        res = self.client.get(nonce_url, {"address": wallet_address})
+        assert res.status_code == 200
+        message = res.data["message"]
+
+        # 2. Sign message
+        signed = Account.sign_message(encode_defunct(text=message), account.key)
+
+        # 3. Verify signature to get JWT
+        verify_url = reverse("auth-verify")
+        res = self.client.post(
+            verify_url,
+            {"address": wallet_address, "signature": signed.signature.hex()},
+            format="json",
+        )
+        assert res.status_code == 200, f"Verification failed: {res.data}"
+
+        # 4. Attach to client for requests
+        token = res.data["access"]
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+
+        return account
+
     def create_consent(
-        self,
-        reason="Test reason",
-        dataset="did:op:8f0d80e898aef506dd87d17dc3d01cb89e61c33bab9618817394c7ad2fd725f0",
-        algorithm="did:op:4845638ac968b7929f91cfedfea1f7f87ebb08ee21f18dfc480289cbb6ceeb83",
-        solicitor="solicitor address",
-        request="0",
+        self, reason="Test reason", request="0", authenticate=True
     ) -> HttpResponse:
+        if authenticate:
+            self.authenticate(config.TEST_PRIVATE_KEY)
+
         response = self.client.post(
             reverse("consents-list"),
             {
                 "reason": reason,
-                "dataset": dataset,
-                "algorithm": algorithm,
-                "solicitor": solicitor,
+                "dataset": config.TEST_DATASET_DID,
+                "algorithm": config.TEST_ALGORITHM_DID,
                 "request": request,
             },
             format="json",
         )
 
-        if response.status_code != status.HTTP_201_CREATED:
-            print("Failed to create consent:", response.data)
-
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.status_code, status.HTTP_201_CREATED
+        ), "Failed to create consent:", response.data
         self.assertIsNotNone(response.data)
 
         # Return the data into an instance of the Consent model
         return Consent.objects.filter().first()
+
+    def create_consent_response(self, consent_id: int, permitted: str) -> HttpResponse:
+        url = reverse("consent-response-list", args=[consent_id])
+        response = self.client.post(
+            url,
+            {"reason": "Test reason", "permitted": permitted},
+            format="json",
+        )
+
+        self.assertIsNotNone(response)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        url = reverse("consents-detail", args=[consent_id])
+        return self.client.get(url)
 
     def test_consent_creation_creates_assets(self):
         _ = self.create_consent()
@@ -57,9 +104,11 @@ class ConsentTest(APITestCase):
         response = self.client.get(users_url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(User.objects.count(), 2)
-        self.assertIn("solicitor address", str(response.data))
-        self.assertIn(aquarius.mock_address, str(response.data))
+
+        # Creates user for
+        # 1. Dataset owner & Algorithm owner & Requester (all same in this case)
+        self.assertEqual(User.objects.count(), 1)
+        self.assertIn(wallet_address, str(response.data))
 
     def test_consent_list_view(self):
         c = self.create_consent()
@@ -83,7 +132,7 @@ class ConsentTest(APITestCase):
     def test_consent_user_has_pending(self):
         _ = self.create_consent()
 
-        url = reverse("users-detail", args=[aquarius.mock_address])
+        url = reverse("users-detail", args=[wallet_address])
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -92,60 +141,35 @@ class ConsentTest(APITestCase):
 
     def test_consent_response_accepted(self):
         c = self.create_consent(request="3")
+        cr = self.create_consent_response(c.pk, "3")
 
-        url = reverse("consent-response-list", args=[c.pk])
-        response = self.client.post(
-            url,
-            {"reason": "Test reason", "permitted": "3"},
-            format="json",
-        )
-
-        self.assertIsNotNone(response)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-        url = reverse("consents-detail", args=[c.pk])
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIsNotNone(response.data)
-        self.assertEqual("Accepted", response.data["status"])
+        self.assertEqual(cr.status_code, status.HTTP_200_OK)
+        self.assertIsNotNone(cr.data)
+        self.assertEqual("Accepted", cr.data["status"])
 
     def test_consent_response_resolved(self):
         c = self.create_consent(request="3")
+        cr = self.create_consent_response(c.pk, "1")
 
-        url = reverse("consent-response-list", args=[c.pk])
-        response = self.client.post(
-            url,
-            {"reason": "Test reason", "permitted": "1"},
-            format="json",
-        )
-
-        self.assertIsNotNone(response)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-        url = reverse("consents-detail", args=[c.pk])
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIsNotNone(response.data)
-        self.assertEqual("Resolved", response.data["status"])
+        self.assertEqual(cr.status_code, status.HTTP_200_OK)
+        self.assertIsNotNone(cr.data)
+        self.assertEqual("Resolved", cr.data["status"])
 
     def test_consent_response_denied(self):
         c = self.create_consent(request="3")
+        cr = self.create_consent_response(c.pk, "0")
 
-        url = reverse("consent-response-list", args=[c.pk])
-        response = self.client.post(
-            url,
-            {"reason": "Test reason", "permitted": "0"},
-            format="json",
-        )
+        self.assertEqual(cr.status_code, status.HTTP_200_OK)
+        self.assertIsNotNone(cr.data)
+        self.assertEqual("Denied", cr.data["status"])
 
-        self.assertIsNotNone(response)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+    def test_create_consent_unauthenticated(self):
+        with self.assertRaises(AssertionError):
+            self.create_consent(request="3", authenticate=False)
 
-        url = reverse("consents-detail", args=[c.pk])
-        response = self.client.get(url)
+    def test_respond_consent_unauthorized(self):
+        with self.assertRaises(AssertionError):
+            c = self.create_consent(request="3")
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIsNotNone(response.data)
-        self.assertEqual("Denied", response.data["status"])
+            self.client.credentials(HTTP_AUTHORIZATION=None)
+            self.create_consent_response(c.pk, "0")

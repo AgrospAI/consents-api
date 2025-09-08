@@ -49,6 +49,10 @@ services:
     command: bash -c "python manage.py test -v 2"
     environment:
       DATABASE_URI: postgresql://postgres:example@db:5432/consents
+      ENVIRONMENT: Testing
+      TEST_PRIVATE_KEY: ${TEST_PRIVATE_KEY}
+      TEST_DATASET_DID: ${TEST_DATASET_DID}
+      TEST_ALGORITHM_DID: ${TEST_ALGORITHM_DID}
     volumes:
       - ./project/:/app:ro
     depends_on:

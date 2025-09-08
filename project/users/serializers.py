@@ -46,3 +46,15 @@ class DetailUserSerializer(serializers.ModelSerializer):
 
     def get_outgoing_pending_consents(self, obj):
         return Consent.helper.from_algorithm_owner(obj, pending_only=True).count()
+
+
+class NonceQuerySerializer(serializers.Serializer):
+
+    address = serializers.CharField()
+    chain_id = serializers.IntegerField(required=False, default=1, min_value=1)
+
+
+class NonceVerifySerializer(serializers.Serializer):
+
+    address = serializers.CharField()
+    signature = serializers.CharField()
