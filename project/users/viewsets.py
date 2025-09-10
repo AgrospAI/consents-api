@@ -1,6 +1,7 @@
 import secrets
 from datetime import timedelta
 from typing import Literal
+from urllib.parse import urlparse
 
 from consents.models import Consent
 from consents.serializers import ListConsent
@@ -81,8 +82,6 @@ class UsersViewset(
 SIWE_VERSION = getattr(settings, "SIWE_VERSION", "1")
 NONCE_EXP_MINUTES = getattr(settings, "NONCE_EXP_MINUTES", 15)
 ACCESS_TOKEN_LIFETIME_MINUTES = getattr(settings, "WALLET_ACCESS_TOKEN_MINUTES", None)
-PIN_DOMAIN = getattr(settings, "SIWE_DOMAIN", None)  # e.g., "api.example.com"
-PIN_URI = getattr(settings, "SIWE_URI", None)  # e.g., "https://api.example.com/"
 
 
 class WalletAuthViewset(viewsets.ViewSet):
@@ -117,9 +116,14 @@ class WalletAuthViewset(viewsets.ViewSet):
         address = q.validated_data["address"].strip()
         chain_id = q.validated_data["chain_id"]
 
-        # Derive domain & uri: use pinned values if configured, else from request.
-        domain = PIN_DOMAIN or request.get_host().split(":")[0]
-        uri = PIN_URI or request.build_absolute_uri("/")
+        # Derive domain & uri from request.
+        origin = request.headers.get("Origin")
+        if origin:
+            domain = urlparse(origin).hostname
+        else:
+            domain = request.get_host().split(":")[0]
+
+        uri = request.build_absolute_uri("/")
 
         # Normalize address to checksum for display; we store original case-insensitively.
         try:
