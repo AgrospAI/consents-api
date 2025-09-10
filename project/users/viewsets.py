@@ -119,11 +119,13 @@ class WalletAuthViewset(viewsets.ViewSet):
         # Derive domain & uri from request.
         origin = request.headers.get("Origin")
         if origin:
-            domain = urlparse(origin).hostname
+            parsed = urlparse(origin)
+            domain = parsed.hostname
+            uri = f"{parsed.scheme}://{parsed:netloc}"  # Match frontend URI
         else:
+            # Fallback for server-side
             domain = request.get_host().split(":")[0]
-
-        uri = request.build_absolute_uri("/")
+            uri = request.build_absolute_uri("/")
 
         # Normalize address to checksum for display; we store original case-insensitively.
         try:
