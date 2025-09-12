@@ -1,7 +1,7 @@
 import secrets
 from datetime import timedelta
 from typing import Literal
-from urllib.parse import urlparse
+from urllib.parse import ParseResult, urlparse
 
 from consents.models import Consent
 from consents.serializers import ListConsent
@@ -117,11 +117,29 @@ class WalletAuthViewset(viewsets.ViewSet):
         chain_id = q.validated_data["chain_id"]
 
         # Derive domain & uri from request.
-        origin = request.headers.get("Origin")
+        origin = request.headers.get("Origin") or request.headers.get("Referer")
         if origin:
-            parsed = urlparse(origin)
-            domain = parsed.hostname
-            uri = f"{parsed.scheme}://{parsed:netloc}"  # Match frontend URI
+            # Normalize
+
+            if isinstance(origin, bytes):
+                origin = origin.decode("utf-8", errors="ignore")
+            elif isinstance(origin, ParseResult):
+                origin = origin.geturl()
+            else:
+                origin = str(origin)
+
+            try:
+                parsed = urlparse(origin)
+
+                domain = parsed.hostname
+                scheme = parsed.scheme
+                netloc = parsed.netloc
+                uri = f"{scheme}://{netloc}"
+            except Exception as e:
+                return response.Response(
+                    {"error": f"Error retrieving origin from headers: {e}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         else:
             # Fallback for server-side
             domain = request.get_host().split(":")[0]
