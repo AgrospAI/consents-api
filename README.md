@@ -1,3 +1,3 @@
 ## Consents API
 
-In order to develop new features in the portal, we ran into the need of having an API that helped with the process of requesting and giving permisison to use certain assets.
+API that leverages the management of Consent Petitions and their Responses tied to a Web3 user authentication.
