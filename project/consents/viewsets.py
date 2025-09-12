@@ -1,7 +1,10 @@
 from django.db import transaction
 from django.db.models import Q
+from helpers.permissions.consent import ConsentPermissions
+from helpers.permissions.consent_response import ConsentResponsePermissions
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.mixins import (
     CreateModelMixin,
     DestroyModelMixin,
@@ -30,6 +33,7 @@ class ConsentsViewset(
 ):
     queryset = Consent.objects.all()
     serializer_class = ListConsent
+    permission_classes = (ConsentPermissions,)
 
     def get_serializer_class(self):
         match self.action:
@@ -77,6 +81,7 @@ class ConsentResponseViewset(
 ):
     queryset = ConsentResponse.objects.all()
     serializer_class = DetailConsentResponse
+    permission_classes = (ConsentResponsePermissions,)
 
     def get_serializer_class(self):
         match self.action:
@@ -87,7 +92,21 @@ class ConsentResponseViewset(
     @transaction.atomic
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as exc:
+            codes = exc.get_codes().values()
+            detail = exc.detail
+
+            if "forbidden" in codes:
+                return Response({"detail": detail}, status=status.HTTP_403_FORBIDDEN)
+
+            if "already_exists" in codes:
+                return Response({"detail": detail}, status=status.HTTP_409_CONFLICT)
+
+            return Response({"detail": detail}, status=status.HTTP_400_BAD_REQUEST)
+
         instance = serializer.save()
 
         response_serializer = ListConsent(

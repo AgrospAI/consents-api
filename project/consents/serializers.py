@@ -4,19 +4,18 @@ from helpers.bitfields import get_mask
 from helpers.fields.BitField import BitFieldSerializer
 from helpers.validators.BitFieldMarked import BitFieldMarked
 from helpers.validators.DidLengthValidator import DidLengthValidator
-from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import (
-    SerializerMethodField,
     CharField,
     HyperlinkedIdentityField,
     HyperlinkedModelSerializer,
     HyperlinkedRelatedField,
     IntegerField,
     ModelSerializer,
+    SerializerMethodField,
 )
 from rest_framework_nested.relations import NestedHyperlinkedRelatedField
 from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
-from rest_framework.exceptions import ValidationError
 from users.serializers import ListUserSerializer
 
 from consents.models import Consent, ConsentResponse, Status
@@ -67,13 +66,6 @@ class ListConsent(HyperlinkedModelSerializer):
     created_at = IntegerField(source="timestamp")
     request = BitFieldSerializer()
     response = DetailConsentResponse()
-    # response = NestedHyperlinkedRelatedField(
-    #     view_name="consent-response-detail",
-    #     parent_lookup_kwargs={
-    #         "consent_pk": "consent__pk",
-    #     },
-    #     read_only=True,
-    # )
     status = CharField()
     direction = SerializerMethodField()
 
@@ -182,33 +174,30 @@ class CreateConsentResponse(NestedHyperlinkedModelSerializer):
             "permitted",
         )
 
-    def save(self, *args, **kwargs):
-        consent_pk = self.context["view"].kwargs["consent_pk"]
-        kwargs["consent"] = Consent.objects.get(pk=consent_pk)
-        return super().save(*args, **kwargs)
-
     def create(self, validated_data):
         # Get the consent instance from the context
         consent_pk = self.context["view"].kwargs["consent_pk"]
-        consent_instance = Consent.objects.get(pk=consent_pk)
+        consent_instance = Consent.objects.select_related(
+            "dataset", "dataset__owner"
+        ).get(pk=consent_pk)
 
-        request_address = self.context["request"].user.address
-        dataset_owner_address = consent_instance.dataset.owner.address
-        if str(request_address) != str(dataset_owner_address):
+        # Ownership check
+        request_user = self.context["request"].user
+        if consent_instance.dataset.owner != request_user:
             raise ValidationError(
-                f"Unauthorized: wallet {request_address} is not owner of dataset {dataset_owner_address}",
-                status.HTTP_403_FORBIDDEN,
+                "You are not the owner of the dataset",
+                code="forbidden",
             )
 
-        # Check if the consent already has been responded to
+        # Already responded check
         if hasattr(consent_instance, "response"):
             raise ValidationError(
-                "Consent already has been responded to", status.HTTP_400_BAD_REQUEST
+                "Consent already has been responded to",
+                code="already_exists",
             )
 
-        permitted_mask = get_mask(validated_data["permitted"], Consent)
-
         # Validate that the permitted field response has been requested
+        permitted_mask = get_mask(validated_data["permitted"], Consent)
         BitFieldMarked(consent_instance.request)(permitted_mask)
 
         validated_data["permitted"] = permitted_mask
@@ -216,5 +205,8 @@ class CreateConsentResponse(NestedHyperlinkedModelSerializer):
             get_mask(consent_instance.request, Consent),
             get_mask(permitted_mask, Consent),
         )
+
+        # Attach the consent instance
+        validated_data["consent"] = consent_instance
 
         return super().create(validated_data)
