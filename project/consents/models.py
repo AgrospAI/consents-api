@@ -105,6 +105,10 @@ class HelperConsentsManager(models.Manager):
         queryset = self.pending() if pending_only else self.all()
         return queryset.filter(algorithm__owner=owner)
 
+    def from_solicitor(self, solicitor: str, pending_only=False):
+        queryset = self.pending() if pending_only else self.all()
+        return queryset.filter(solicitor=solicitor)
+
 
 class Consent(models.Model):
     class Meta:

@@ -52,7 +52,7 @@ class UsersViewset(
                     user, pending_only=pending_only
                 )
             case "outgoing":
-                consents = Consent.helper.from_algorithm_owner(
+                consents = Consent.helper.from_solicitor(
                     user, pending_only=pending_only
                 )
 

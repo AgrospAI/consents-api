@@ -11,6 +11,7 @@ class ConsentPermissions(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         if view.action == "destroy":
+            print("Destroy request:", obj.solicitor, request.user)
             return obj.solicitor == request.user
 
         return True

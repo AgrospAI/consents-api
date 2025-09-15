@@ -45,7 +45,7 @@ class DetailUserSerializer(serializers.ModelSerializer):
         return Consent.helper.from_dataset_owner(obj, pending_only=True).count()
 
     def get_outgoing_pending_consents(self, obj):
-        return Consent.helper.from_algorithm_owner(obj, pending_only=True).count()
+        return Consent.helper.from_solicitor(obj, pending_only=True).count()
 
 
 class NonceQuerySerializer(serializers.Serializer):
