@@ -33,7 +33,6 @@ class RequestFlags:
     flags = (
         ("trusted_algorithm_publisher", _("Trusted Algorithm Publisher")),
         ("trusted_algorithm", _("Trusted Algorithm")),
-        ("trusted_credential_address", _("Trusted Credential Address")),
         ("allow_network_access", _("Allow Network Access")),
     )
 
