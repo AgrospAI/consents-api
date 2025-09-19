@@ -7,7 +7,10 @@ schema_view = get_schema_view(
     openapi.Info(
         title="Consents API",
         default_version="v1",
-        description="A WIP API for managing consents of your dataspace",
+        description="API for managing consent petitions of AgrospAI.",
+        terms_of_service="https://agrospai.udl.cat/legal/terms/",
+        contact=openapi.Contact(email="agrospai@udl.cat"),
+        license=openapi.License(name="BSD License"),
     ),
     public=True,
     permission_classes=(AllowAny,),
