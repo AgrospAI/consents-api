@@ -1,4 +1,3 @@
-from datetime import timedelta
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
 from helpers.services.aquarius import aquarius

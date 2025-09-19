@@ -4,6 +4,7 @@ from rest_framework.serializers import (
     HyperlinkedModelSerializer,
     ModelSerializer,
     SerializerMethodField,
+    IntegerField,
 )
 
 from assets.models import Asset
@@ -13,6 +14,7 @@ class ListAsset(HyperlinkedModelSerializer):
     url = HyperlinkedIdentityField(view_name="assets-detail", lookup_field="did")
     owner = CharField(source="owner.address")
     type = CharField(source="get_type_display")
+    chain_id = IntegerField()
 
     class Meta:
         model = Asset
@@ -21,12 +23,14 @@ class ListAsset(HyperlinkedModelSerializer):
             "did",
             "owner",
             "type",
+            "chain_id",
         )
 
 
 class DetailAsset(ModelSerializer):
     owner = CharField(source="owner.address")
     type = CharField(source="get_type_display")
+    chain_id = IntegerField()
     pending_consents = SerializerMethodField()
 
     class Meta:
@@ -36,6 +40,7 @@ class DetailAsset(ModelSerializer):
             "owner",
             "type",
             "pending_consents",
+            "chain_id",
         )
 
     def get_pending_consents(self, obj):

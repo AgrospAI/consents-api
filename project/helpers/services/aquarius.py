@@ -27,6 +27,23 @@ class AquariusService:
 
         return res.json().get("nft").get("owner")
 
+    def get_asset_chain_id(self, asset_did: str) -> int:
+        """Queries the Aquarius cache API for the chainId of an asset.
+
+        Args:
+            asset_did (str): The DID of the asset.
+
+        Returns:
+            int: The asset's chainId
+        """
+
+        url = f"{self.url}/api/aquarius/assets/ddo/{asset_did}"
+        res = requests.get(url)
+
+        assert res.status_code == 200, f"Error querying Aquarius: {res.text}"
+
+        return res.json().get("chainId")
+
 
 aquarius = AquariusService()
 

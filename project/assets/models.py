@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from helpers.services.aquarius import aquarius
 from helpers.validators.DidLengthValidator import DidLengthValidator
 
 User = get_user_model()
@@ -15,7 +16,12 @@ class AssetManager(models.Manager):
                 return Asset.objects.get(id=asset.id).outgoing_consents.count()
         return -1
 
-    def get_or_create(self, did: str, type: str) -> "Asset":
+    def get_or_create(
+        self,
+        did: str,
+        type: str,
+        chain_id: int | None = None,
+    ) -> "Asset":
         asset = self.filter(did=did)
         if asset.exists():
             asset = asset.first()
@@ -23,11 +29,17 @@ class AssetManager(models.Manager):
                 raise ValueError(
                     f"Asset with DID {did} already exists with type {asset.type}, expected {type}."
                 )
+            if chain_id and asset.chain_id != chain_id:
+                raise ValueError(
+                    f"Asset with DID {did} already exists with chain_id {asset.chain_id}, expected {chain_id}."
+                )
             return asset
 
         # Create the owner instance
         owner = User.helper.get_or_create_from_aquarius(did)
-        return self.create(did=did, owner=owner, type=type)
+        chain_id = aquarius.get_asset_chain_id(did)
+
+        return self.create(did=did, owner=owner, type=type, chain_id=chain_id)
 
 
 class Asset(models.Model):
@@ -56,6 +68,7 @@ class Asset(models.Model):
         choices=Types.choices,
         default=Types.DATASET,
     )
+    chain_id = models.PositiveIntegerField(default=-1)
 
     objects = models.Manager()
     helper = AssetManager()
