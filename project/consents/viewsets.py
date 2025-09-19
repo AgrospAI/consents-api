@@ -190,7 +190,62 @@ class ConsentsViewset(
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
 
-    @swagger_auto_schema(tags=["Consent Petition"])
+    @swagger_auto_schema(
+        operation_summary="Delete a Consent Petition",
+        operation_description="Delete a Consent Petition. Must be authenticated and be the solicitor of the Consent Petition.",
+        manual_parameters=[
+            openapi.Parameter(
+                "id",
+                openapi.IN_PATH,
+                type=openapi.TYPE_NUMBER,
+                description="Consent's primary key",
+                required=True,
+                example=1,
+            )
+        ],
+        responses={
+            "204": openapi.Response(
+                description="Consent Petititon deleted",
+            ),
+            "401": openapi.Response(
+                description="Unauthorized",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={"detail": openapi.Schema(type=openapi.TYPE_STRING)},
+                ),
+                examples={
+                    "application/json": {
+                        "detail": "Authentication credentials were not provided",
+                    }
+                },
+            ),
+            "403": openapi.Response(
+                description="Forbidden",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={"detail": openapi.Schema(type=openapi.TYPE_STRING)},
+                ),
+                examples={
+                    "application/json": {
+                        "detail": "You can not perform this action",
+                    }
+                },
+            ),
+            "404": openapi.Response(
+                description="Consent Petition not found",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={"detail": openapi.Schema(type=openapi.TYPE_STRING)},
+                ),
+                examples={
+                    "application/json": {
+                        "detail": "Not Found",
+                    }
+                },
+            ),
+        },
+        tags=["Consent Petition"],
+    )
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
