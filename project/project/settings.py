@@ -17,6 +17,7 @@ from pathlib import Path
 import dj_database_url
 import environ
 from django.core.management.utils import get_random_secret_key
+from helpers.config import config
 
 env = environ.Env()
 
@@ -108,6 +109,7 @@ WSGI_APPLICATION = "project.wsgi.application"
 DATABASES = {
     "default": dj_database_url.config(
         env="DATABASE_URI",
+        default=config.DATABASE_URI,
         conn_max_age=600,
         conn_health_checks=True,
     ),

@@ -22,6 +22,7 @@ services:
       - "${CONSENTS_API_PORT}:8000"
     environment:
       DATABASE_URI: postgresql://postgres:example@db:5432/consents
+      AQUARIUS_URL: http://host.docker.internal:10000
     volumes:
       - ./project/:/app:cached
     depends_on:
