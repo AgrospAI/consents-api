@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -21,7 +23,7 @@ class AssetManager(models.Manager):
         did: str,
         type: str,
         chain_id: int | None = None,
-    ) -> "Asset":
+    ) -> Asset:
         asset = self.filter(did=did)
         if asset.exists():
             asset = asset.first()
@@ -68,7 +70,7 @@ class Asset(models.Model):
         choices=Types.choices,
         default=Types.DATASET,
     )
-    chain_id = models.PositiveIntegerField(default=-1)
+    chain_id = models.PositiveIntegerField(default=0)
 
     objects = models.Manager()
     helper = AssetManager()
